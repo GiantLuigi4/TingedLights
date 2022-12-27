@@ -1,0 +1,27 @@
+{
+  "tingedlights:default": {
+    "start": [252, 252, 252],
+    "end": [45.0, 36.0, 29.0, 2.5],
+    "transition_start": 14,
+    "brightness": -1,
+    "distance_fade": false
+  },
+  "minecraft:glow_lichen": {
+    "color": [173, 174, 140],
+    "brightness": -1
+  },
+  "minecraft:glowstone": {
+    "color": [250, 217, 118],
+    "brightness": -1
+  },
+  "minecraft:fire": {
+    "start": [217, 148, 24],
+    "end": [214, 141, 21],
+    "brightness": -1,
+    "transition_start": 9
+  },
+  "minecraft:nether_portal": {
+    "color": [128, 49, 193],
+    "brightness": -1
+  }
+}

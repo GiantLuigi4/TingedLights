@@ -1,0 +1,37 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "tfc.tingedlights.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "tingedlights.refmap.json",
+  "mixins": [
+  ],
+  "client": [
+    "render.BlockRendererMixin",
+    "render.vertex.VertexFormatMixin",
+    "render.vertex.VertexElementMixin",
+    "MojangWhy",
+    "render.vertex.builder.VertexBufferConsumerMixin",
+    "render.vertex.builder.BufferBuilderMixin",
+    "render.shaders.ShaderProgramMixin",
+    "render.shaders.ShaderInstancePreprocessorMixin",
+    "backend.ClientLevelMixin",
+    "backend.LightEngineMixin",
+    "jank.IForgeVertexConsumerMixin",
+    "render.multibuffers.BufferSourceMixin",
+    "render.others.EntityRendererMixin",
+    "render.others.BlockEntityRendererMixin",
+    "render.others.FirstPersonHandMixin",
+    "render.others.ParticleEngineMixin",
+    "backend.LevelMixin",
+    "backend.BlockMixin",
+    "render.LevelRendererMixin",
+    "render.FluidRendererMixin",
+    "backend.SectionChangedPacketMixin",
+    "backend.LevelChunkMixin",
+    "render.others.LightingMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

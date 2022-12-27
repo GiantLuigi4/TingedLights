@@ -1,0 +1,17 @@
+{
+  "minecraft:redstone_torch": {
+    "color": [255, 25, 0],
+    "brightness": -1
+  },
+  "minecraft:redstone_wall_torch": {
+    "color": [255, 25, 0],
+    "brightness": -1
+  },
+  "minecraft:redstone_ore": {
+    "color": [255, 25, 0],
+    "brightness": -1,
+    "state": {
+      "lit": true
+    }
+  }
+}

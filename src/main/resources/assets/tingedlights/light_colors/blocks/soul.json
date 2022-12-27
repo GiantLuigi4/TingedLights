@@ -1,0 +1,32 @@
+{
+  "minecraft:soul_torch": {
+    "start": [252, 252, 252],
+    "end": [121, 249, 253],
+    "transition_start": 7,
+    "brightness": -1
+  },
+  "minecraft:soul_torch": {
+    "start": [252, 252, 252],
+    "end": [121, 249, 253],
+    "transition_start": 7,
+    "brightness": -1
+  },
+  "minecraft:soul_lantern": {
+    "start": [252, 252, 252],
+    "end": [121, 249, 253],
+    "transition_start": 7,
+    "brightness": -1
+  },
+  "minecraft:soul_campfire": {
+    "start": [252, 252, 252],
+    "end": [121, 249, 253],
+    "transition_start": 7,
+    "brightness": -1
+  },
+  "minecraft:soul_fire": {
+    "start": [252, 252, 252],
+    "end": [121, 249, 253],
+    "transition_start": 7,
+    "brightness": -1
+  }
+}
