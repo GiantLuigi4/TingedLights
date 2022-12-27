@@ -52,57 +52,8 @@ public class LightBlender {
 		Color[] colorsOut = new Color[sz];
 		int index = 0;
 		for (LightNode node : nodes) {
-			int dist = node.brightness();
-			if (dist < 0) dist = 0;
-			if (dist > 15) dist = 15;
-			
-			final float divisor = 10;
-			final float mul = 1 / MathUtils.smoothLight(15 / divisor);
-			
-			float d = dist / 15f;
-//			float d = MathUtils.smoothLight((dist) / divisor) * mul;
-//			if (dist != 0) d = Mth.lerp(maxLightmap / 40f, d, 1);
-//			d /= (node.getColor().r() + node.getColor().g() + node.getColor().b()) / 2;
-			
-			Color blended = node.getLight().color();
-			// TODO: redo this?
-			if (dist < node.light().blendThreshold()) {
-				Color blendTo = node.getLight().endColor();
-				
-				float blendDist = ((dist - node.light().blendThreshold()));
-				blendDist = -blendDist;
-				blendDist /= (node.light().blendThreshold());
-//				blendDist *= 15;
-//				blendDist = MathUtils.smoothLight((blendDist) / divisor) * mul;
-				blendDist = 1 - blendDist;
-				blendDist = (float) Math.pow(blendDist, 2.5);
-				blendDist = 1 - blendDist;
-				
-				blended = new Color(
-						(blended.r() * (1 - blendDist)) + blendTo.r() * blendDist,
-						(blended.g() * (1 - blendDist)) + blendTo.g() * blendDist,
-						(blended.b() * (1 - blendDist)) + blendTo.b() * blendDist
-				);
-//				blended = new Color(
-//						0, 0, blendDist
-//				);
-
-//				double b1 = blended.getBrightness();
-//				double v = (Math.max(b0, b1) - Math.min(b0, b1)) / 1.2;
-//				d += v;
-//				if (d > 1) d = 1;
-			}
-			
-			// TODO: should I find a better way to do this..?
-			if (node.light().distanceFade()) {
-				colorsOut[index] = new Color(
-						blended.r() * d,
-						blended.g() * d,
-						blended.b() * d
-				);
-			} else {
-				colorsOut[index] = blended;
-			}
+			Color blended = node.light().getColor(node.brightness());
+			colorsOut[index] = blended;
 			index++;
 		}
 		return colorsOut;

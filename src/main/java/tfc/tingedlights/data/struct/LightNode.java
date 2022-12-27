@@ -2,6 +2,7 @@ package tfc.tingedlights.data.struct;
 
 import net.minecraft.core.BlockPos;
 import tfc.tingedlights.api.data.Light;
+import tfc.tingedlights.data.Color;
 
 import java.util.Map;
 import java.util.Objects;
