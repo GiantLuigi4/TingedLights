@@ -9,7 +9,6 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import tfc.tingedlights.data.Color;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 
 public class LightChunk {
@@ -91,10 +90,12 @@ public class LightChunk {
 		if (nodules == null) return;
 		nodules.removeLight(nodule);
 		if (nodules.lights() == 0) nodes.remove(relativePos);
-		// TODO: debug this
+	}
+	
+	public void markDirty(LightNode node) {
 		if (access instanceof LevelChunk chunk) {
-			BlockPos pos = nodule.pos;
-			BlockState state = chunk.getBlockState(relativePos);
+			BlockPos pos = node.pos;
+			BlockState state = chunk.getBlockState(node.clampedPos(new BlockPos.MutableBlockPos()).immutable());
 			BlockState dummyState = Blocks.AIR.defaultBlockState();
 			if (state.isAir()) dummyState = Blocks.STONE.defaultBlockState();
 			chunk.getLevel().setBlocksDirty(pos, dummyState, state);
@@ -122,13 +123,6 @@ public class LightChunk {
 		if (lightNode.pos.getY() > maxPos.getY()) return false;
 		if (lightNode.pos.getZ() > maxPos.getZ()) return false;
 		nodules.addLight(lightNode);
-		if (access instanceof LevelChunk chunk) {
-			BlockPos pos = lightNode.pos;
-			BlockState state = chunk.getBlockState(relativePos);
-			BlockState dummyState = Blocks.AIR.defaultBlockState();
-			if (state.isAir()) dummyState = Blocks.STONE.defaultBlockState();
-			chunk.getLevel().setBlocksDirty(pos, dummyState, state);
-		}
 		return true;
 	}
 	

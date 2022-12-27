@@ -86,11 +86,12 @@ public class BlockTesselator {
 			LightManager manager = ((ILightEngine) pLevel.getLightEngine()).getManager();
 			Color blockColor = manager.getColor(lightProbePos, true);
 			if (blockColor == null) {
-				extensions.setColorDone(false);
-				extensions.setDefault(new Color(0,0,0));
-				pConsumer.putBulkData(pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, 1, lightmap, pPackedOverlay, true);
-				extensions.setColorDone(false);
-				return;
+				blockColor = new Color(0,0,0);
+//				extensions.setColorDone(false);
+//				extensions.setDefault(new Color(0,0,0));
+//				pConsumer.putBulkData(pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, 1, lightmap, pPackedOverlay, true);
+//				extensions.setColorDone(false);
+//				return;
 			}
 			
 			extensions.setColorDone(true);
