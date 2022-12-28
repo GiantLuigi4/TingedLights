@@ -26,6 +26,8 @@ public class BlockTesselator {
 	protected static final Color defaultColor = new Color(0, 0, 0);
 	
 	public static void putQuadData(BlockColors blockColors, BlockAndTintGetter pLevel, BlockState pState, BlockPos pPos, VertexConsumer pConsumer, PoseStack.Pose pPose, BakedQuad pQuad, float pBrightness0, float pBrightness1, float pBrightness2, float pBrightness3, int pLightmap0, int pLightmap1, int pLightmap2, int pLightmap3, int pPackedOverlay, ThreadLocal<BlockPos> posThreadLocal, boolean smooth, AOFace face) {
+		TesselationState.guiLighting.set(false);
+		
 		float f;
 		float f1;
 		float f2;
@@ -86,12 +88,11 @@ public class BlockTesselator {
 			LightManager manager = ((ILightEngine) pLevel.getLightEngine()).getManager();
 			Color blockColor = manager.getColor(lightProbePos, true);
 			if (blockColor == null) {
-				blockColor = new Color(0,0,0);
-//				extensions.setColorDone(false);
-//				extensions.setDefault(new Color(0,0,0));
-//				pConsumer.putBulkData(pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, 1, lightmap, pPackedOverlay, true);
-//				extensions.setColorDone(false);
-//				return;
+				extensions.setColorDone(false);
+				extensions.setDefault(new Color(0, 0, 0));
+				pConsumer.putBulkData(pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, 1, lightmap, pPackedOverlay, true);
+				extensions.setColorDone(false);
+				return;
 			}
 			
 			extensions.setColorDone(true);

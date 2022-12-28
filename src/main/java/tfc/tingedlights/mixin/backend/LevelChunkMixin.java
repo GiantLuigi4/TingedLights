@@ -59,7 +59,13 @@ public abstract class LevelChunkMixin implements IHoldColoredLights {
 		try {
 			LevelChunk lvlChunk = (LevelChunk) (Object) this;
 			for (LevelChunkSection section : lvlChunk.getSections()) {
+				if (section.hasOnlyAir()) continue;
+				
 				BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
+				
+				int sectionY = (int) SectionPos.blockToSection(section.bottomBlockY());
+				sectionY = lvlChunk.getSectionIndex(sectionY);
+				
 				for (int x = 0; x < 16; x++) {
 					for (int y = 0; y < 16; y++) {
 						for (int z = 0; z < 16; z++) {
@@ -82,8 +88,6 @@ public abstract class LevelChunkMixin implements IHoldColoredLights {
 									
 									Light light = attachments.createLight(state, lvlChunk.getLevel(), blockPos.immutable());
 									if (light != null) {
-										int sectionY = (int) SectionPos.blockToSection(blockPos.getY());
-										sectionY = lvlChunk.getSectionIndex(sectionY);
 										manager.addLight(light);
 										sources[sectionY].add(light);
 									}

@@ -1,6 +1,5 @@
 package tfc.tingedlights.data;
 
-import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -133,106 +132,114 @@ public class LightManager {
 		int trueMax = maxUpdates;
 		int trueCount = 0;
 		int addCount = 0;
+		int maxPerIter = maxUpdates / 1;
 		for (int i = updates.newNodes.length - 1; i >= 0; i--) {
-			maxUpdates /= 15;
-			maxUpdates += addCount;
-			addCount = 0;
+//			maxUpdates = maxPerIter;
+//			maxUpdates += addCount;
+			
 			int updateCount = 0;
 			Set<LightNode> newNodes = updates.newNodes[i];
 			Set<LightNode> addedNodes = updates.addedNodes[i];
-			while (!newNodes.isEmpty()) {
-				nodeLoop:
-				for (LightNode node : newNodes) {
-					finishedNodes.add(node);
-					
-					try {
-						for (Direction direction : DIRECTIONS) {
-							BlockPos immut = new BlockPos(node.pos.getX() + direction.getStepX(), node.pos.getY() + direction.getStepY(), node.pos.getZ() + direction.getStepZ());
-							
-							LightNode nd = node.system().get(immut);
-							if (nd != null) {
-								byte old = nd.brightness();
-								byte current = (byte) (node.brightness() - dimmingAmount(nd.pos, nd.clampedPos(mutableBlockPos), nd.chunk, direction));
-								if (current > old) {
-									nd.setBrightness(current);
-									addedNodes.add(nd);
-								}
+			
+			nodeLoop:
+			for (LightNode node : newNodes) {
+				finishedNodes.add(node);
+				
+				try {
+					for (Direction direction : DIRECTIONS) {
+						BlockPos immut = new BlockPos(node.pos.getX() + direction.getStepX(), node.pos.getY() + direction.getStepY(), node.pos.getZ() + direction.getStepZ());
+						
+						LightNode nd = node.system().get(immut);
+						if (nd != null) {
+							byte old = nd.brightness();
+							byte current = (byte) (node.brightness() - dimmingAmount(nd.pos, nd.clampedPos(mutableBlockPos), nd.chunk, direction));
+							if (current > old) {
+								nd.setBrightness(current);
+								addedNodes.add(nd);
+								
+								// TODO: debug?
+								// for some reason, if updatedLightBlocks.add() is in the if statement, some blocks on the edges of chunks don't refresh
+								updatedPositions.add(node);
+							}
+							updatedLightBlocks.add(node.chunk.getLightInfo(immut));
+							continue;
+						}
+						
+						node.clampedPos(mutableBlockPos);
+						int rx = immut.getX() & 15;
+						int ry = immut.getY();
+						int rz = immut.getZ() & 15;
+						
+						LightChunk chunk = node.chunk;
+						if (chunk == null) continue; // TODO: queue light propagation
+						if (rx == 15 && mutableBlockPos.getX() == 0)
+							chunk = chunk.south();
+						if (rx == 0 && mutableBlockPos.getX() == 15)
+							chunk = chunk.north();
+						
+						if (rz == 15 && mutableBlockPos.getZ() == 0)
+							chunk = chunk.west();
+						if (rz == 0 && mutableBlockPos.getZ() == 15)
+							chunk = chunk.east();
+						
+						if (chunk == null) continue; // TODO: queue light propagation
+						if (node.brightness() != (byte) 1) {
+							LightNode ref = node.reference();
+							if (ref == null) ref = node;
+							BlockPos relativePos = new BlockPos(rx, ry, rz);
+							ChunkAccess access = chunk.access.get();
+							BlockPos newLightPos = new BlockPos(
+									access.getPos().getBlockX(rx),
+									ry,
+									access.getPos().getBlockZ(rz)
+							);
+							// calc light
+							byte val = (byte) (node.brightness() - dimmingAmount(newLightPos, relativePos, chunk, direction));
+							if (val < 1) continue;
+							// create node
+							LightNode node1 = new LightNode(
+									chunk, ref.source,
+									val, newLightPos
+							);
+							// mark for update&propagation
+							if (chunk.addNode(relativePos, node1)) {
 								updatedPositions.add(node);
 								updatedLightBlocks.add(node.chunk.getLightInfo(immut));
-								// TODO: update brightness
-								continue;
-							}
-							
-							node.clampedPos(mutableBlockPos);
-							int rx = immut.getX() & 15;
-							int ry = immut.getY();
-							int rz = immut.getZ() & 15;
-							// TODO: deal with neighbor chunks
-							LightChunk chunk = node.chunk;
-							if (chunk == null) continue; // TODO: queue light propagation
-							if (rx == 15 && mutableBlockPos.getX() == 0) chunk = chunk.south();
-							if (rx == 0 && mutableBlockPos.getX() == 15) chunk = chunk.north();
-							
-							if (rz == 15 && mutableBlockPos.getZ() == 0) chunk = chunk.west();
-							if (rz == 0 && mutableBlockPos.getZ() == 15) chunk = chunk.east();
-							
-							if (chunk == null) continue; // TODO: queue light propagation
-							if (node.brightness() != (byte) 1) {
-								LightNode ref = node.reference();
-								if (ref == null) ref = node;
-								BlockPos relativePos = new BlockPos(rx, ry, rz);
-								ChunkAccess access = chunk.access.get();
-								BlockPos newLightPos = new BlockPos(
-										access.getPos().getBlockX(rx),
-										ry,
-										access.getPos().getBlockZ(rz)
-								);
-								byte val = (byte) (node.brightness() - dimmingAmount(newLightPos, relativePos, chunk, direction));
-								if (val < 1) continue;
-								LightNode node1 = new LightNode(
-										chunk, ref.source,
-										val, newLightPos
-								);
-								if (chunk.addNode(relativePos, node1)) {
-									updatedPositions.add(node);
-									updatedLightBlocks.add(node.chunk.getLightInfo(immut));
-									
-									node.addChild(node1);
-									addedNodes.add(node1);
-								}
+								
+								node.addChild(node1);
+								addedNodes.add(node1);
 							}
 						}
-					} catch (Throwable err) {
-						throw new RuntimeException(err);
 					}
-					
-					updateCount++;
-					if (updateCount > maxUpdates) break nodeLoop;
+				} catch (Throwable err) {
+					throw new RuntimeException(err);
 				}
 				
-				int sz = newNodes.size();
-				if (finishedNodes.size() == newNodes.size()) newNodes.clear();
-				else newNodes.removeAll(finishedNodes);
-				if (sz == newNodes.size()) {
-					// TODO: fix the removeAll call
-					maxUpdates = Integer.MAX_VALUE;
-				}
-//				newNodes.clear();
-				finishedNodes.clear();
-				
-				if (i != 0) {
-					newNodes = updates.newNodes[i - 1];
-					
-					newNodes.addAll(addedNodes);
-					addedNodes.clear();
-				}
-				
-				if (updateCount > maxUpdates) break;
+				updateCount++;
+				if (updateCount > maxUpdates) break nodeLoop;
 			}
 			
+			// if the every node in the list has been propagated, there is no point in removing the nodes one by one
+			// instead, the list can be cleared on the spot
+			if (finishedNodes.size() == newNodes.size()) newNodes.clear();
+			else newNodes.removeAll(finishedNodes);
+			
+			finishedNodes.clear();
+			
+			if (i != 0) {
+				newNodes = updates.newNodes[i - 1];
+				
+				// shift the node to the next list of lights to propagate
+				newNodes.addAll(addedNodes);
+				addedNodes.clear();
+			}
+			
+			// calculate the number of updates to carry to the next light value
 			addCount = maxUpdates - updateCount;
 			if (addCount < 0) addCount = 0;
+			// increase the return value
 			trueCount += updateCount;
+			// reset max
 			maxUpdates = trueMax;
 			
 			if (updateCount > maxUpdates) break;
@@ -259,13 +266,13 @@ public class LightManager {
 			}
 			
 			int maxPerSource = 3000; // TODO: find a more exact calculation
-			int expOut = maxPerSource * 16;
+			int expOut = maxPerSource * 4;
 			int maxUpdates = expOut;
 			
-			Set<LightNode> finishedNodes = new ObjectOpenCustomHashSet<>(600, nodeStrategy);
+			Set<LightNode> finishedNodes = new ObjectOpenCustomHashSet<>(600, FastUtil.nodeStrategy);
 			BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
 			
-			Set<LightNode> updatedPositions = new ObjectOpenCustomHashSet<>(600, nodeStrategy);
+			Set<LightNode> updatedPositions = new ObjectOpenCustomHashSet<>(600, FastUtil.nodeStrategy);
 			Set<LightBlock> updatedBlocks = new HashSet<>(600);
 			int maxForPrior = maxUpdates;
 			if (regularUpdates.hasAny()) maxForPrior /= 1.5;
@@ -281,7 +288,7 @@ public class LightManager {
 			}
 			
 			maxUpdates -= this.propagate(priorityUpdates, maxForPrior, finishedNodes, mutableBlockPos, true, updatedPositions, updatedBlocks);
-			maxUpdates /= 16;
+			maxUpdates /= 32;
 			if (maxUpdates > 0)
 				this.propagate(regularUpdates, maxUpdates, finishedNodes, mutableBlockPos, false, updatedPositions, updatedBlocks);
 			
@@ -344,7 +351,7 @@ public class LightManager {
 		playerPos = Minecraft.getInstance().cameraEntity.chunkPosition();
 		
 		handleLightAddition();
-
+		
 		runUpdate();
 		
 		synchronized (this.updatedBlocks) {
@@ -373,78 +380,6 @@ public class LightManager {
 		
 		return block + 1;
 	}
-	
-	/* FastUtil */
-	protected static int comparePos(int v0, int v1) {
-		int absV0 = Math.abs(v0);
-		int absV1 = Math.abs(v1);
-		if (absV0 < absV1)
-			return -1;
-		if (absV0 == absV1)
-			return Integer.compare(v0, v1);
-		return 1;
-	}
-	
-	private static final Comparator<LightNode> nodeComparator = (node0, node1) -> {
-		int v = Integer.compare(node1.brightness(), node0.brightness());
-		if (v == 0) {
-			if (node0.reference() == null) {
-				if (node1.reference() == null) {
-					return node0.light().compareTo(node1.light());
-				}
-				return 1;
-			} else if (node1.reference() == null) {
-				return -1;
-			}
-			
-			int relX0 = node0.pos.getX() - node0.reference().pos.getX();
-			int relX1 = node1.pos.getX() - node1.reference().pos.getX();
-			v = comparePos(relX0, relX1);
-			if (v == 0) {
-				int relY0 = node0.pos.getY() - node0.reference().pos.getY();
-				int relY1 = node1.pos.getY() - node1.reference().pos.getY();
-				
-				v = comparePos(relY0, relY1);
-				if (v == 0) {
-					int relZ0 = node0.pos.getZ() - node0.reference().pos.getZ();
-					int relZ1 = node1.pos.getZ() - node1.reference().pos.getZ();
-					
-					v = comparePos(relZ0, relZ1);
-					
-					if (v == 0) {
-						v = node0.pos.compareTo(node1.pos);
-					}
-				}
-			}
-		}
-		return v;
-	};
-	
-	private static final Hash.Strategy<LightNode> nodeStrategy = new Hash.Strategy<LightNode>() {
-		@Override
-		public int hashCode(LightNode o) {
-			if (o == null) return 0;
-			return (
-					((((o.pos.getX() & 127) * 127) +
-							((o.pos.getY() & 127) * 127)) +
-							((o.pos.getZ() & 127)))
-			) * o.brightness();
-		}
-		
-		@Override
-		public boolean equals(LightNode a, LightNode b) {
-			if (a == b) return true;
-			if (a == null) return false;
-			if (b == null) return false;
-			return
-					a.pos.getX() == b.pos.getX() &&
-							a.pos.getY() == b.pos.getY() &&
-							a.pos.getZ() == b.pos.getZ() &&
-							a.light().equals(b.light())
-					;
-		}
-	};
-	/* end FastUtil */
 	
 	private static final int[][] OFFSETS = new int[][]{
 			new int[]{0, 1},
@@ -564,7 +499,7 @@ public class LightManager {
 		// TODO: this could use some cleanup LOL
 		if (distance(playerPos, access.getPos()) > 8) {
 //			if (true) return Color.BLACK;
-			// TODO: optimize this
+			// TODO: optimize this?
 			Level level = this.level.get();
 			float[] out = new float[]{0, 0, 0};
 			LightChunk north = chunk.north();

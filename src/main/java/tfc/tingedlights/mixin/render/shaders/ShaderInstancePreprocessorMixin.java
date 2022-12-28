@@ -34,12 +34,14 @@ public class ShaderInstancePreprocessorMixin {
 					"        vec2 clamped = clamp(uv / 256.0, vec2(0.5 / 16.0), vec2(15.5 / 16.0));\n" +
 					"        vec4 sky = texture(lightMap, clamped);\n" +
 					"        \n" +
-					"        // TODO: better blending for when light is less than sky\n" +
 					"        if (tinged_lights_value(light) > tinged_lights_value(sky)) {\n" +
 					"            sky += light;\n" +
 					"        } else {\n" +
-					"            if (tinged_lights_value(light) > tinged_lights_value(sky) - 0.15) {\n" +
-					"                sky += light / 2;\n" +
+					"            if (tinged_lights_value(light) > tinged_lights_value(sky) - 0.16) {\n" +
+					"                sky += light / 1.015;\n" +
+					"            } else {\n" +
+					"                vec4 lv = light / 1.025;\n" +
+					"                sky += lv;\n" +
 					"            }\n" +
 					"        }\n" +
 					"        vec4 vec = max(sky, light);\n" +

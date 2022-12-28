@@ -1,6 +1,8 @@
 package tfc.tingedlights.data.struct;
 
-import java.util.HashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import tfc.tingedlights.data.FastUtil;
+
 import java.util.Set;
 
 public class LightingUpdates {
@@ -10,9 +12,9 @@ public class LightingUpdates {
 	
 	public LightingUpdates() {
 		for (int i = 0; i < freshNodes.length; i++) {
-			freshNodes[i] = new HashSet<>();
-			newNodes[i] = new HashSet<>();
-			addedNodes[i] = new HashSet<>();
+			freshNodes[i] = new ObjectOpenCustomHashSet<>(FastUtil.nodeStrategy);
+			newNodes[i] = new ObjectOpenCustomHashSet<>(FastUtil.nodeStrategy);
+			addedNodes[i] = new ObjectOpenCustomHashSet<>(FastUtil.nodeStrategy);
 		}
 	}
 	
