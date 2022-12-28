@@ -3,6 +3,8 @@ package tfc.tingedlights.data;
 import org.jetbrains.annotations.NotNull;
 
 public record Color(float r, float g, float b) implements Comparable<Color> {
+	public static final Color BLACK = new Color(0, 0, 0);
+	
 	public static Color fromRGB(int r, int g, int b) {
 		return new Color(r / 255f, g / 255f, b / 255f);
 	}

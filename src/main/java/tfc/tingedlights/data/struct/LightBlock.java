@@ -21,9 +21,9 @@ public class LightBlock {
 		lightCount = -1;
 	}
 	
-	public void removeLight(LightNode node) {
-		nodes.remove(node);
+	public boolean removeLight(LightNode node) {
 		lightCount = -1;
+		return nodes.remove(node);
 	}
 	
 	public Color getColor() {

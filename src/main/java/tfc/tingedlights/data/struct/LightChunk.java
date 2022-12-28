@@ -1,24 +1,27 @@
 package tfc.tingedlights.data.struct;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import tfc.tingedlights.data.Color;
+import tfc.tingedlights.data.access.IHoldColoredLights;
 
+import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashSet;
 
 public class LightChunk {
 	LightLookup nodes = new LightLookup();
 	
-	public final ChunkAccess access;
+	public final WeakReference<ChunkAccess> access;
 	ChunkPos pos;
 	
 	public LightChunk(ChunkAccess access, ChunkPos pos) {
-		this.access = access;
+		this.access = new WeakReference<>(access);
 		this.pos = pos;
 	}
 	
@@ -88,12 +91,20 @@ public class LightChunk {
 	public void removeNode(BlockPos relativePos, LightNode nodule) {
 		LightBlock nodules = nodes.get(relativePos);
 		if (nodules == null) return;
-		nodules.removeLight(nodule);
+		if (nodules.removeLight(nodule)) {
+			if (nodule.reference() == nodule) {
+				if (access.get() instanceof IHoldColoredLights iHoldColoredLights) {
+					int section = (int) SectionPos.blockToSection(nodule.pos.getY());
+					int sectionLook = access.get().getSectionIndex(section);
+					iHoldColoredLights.getSources()[sectionLook].remove(nodule.light());
+				}
+			}
+		}
 		if (nodules.lights() == 0) nodes.remove(relativePos);
 	}
 	
 	public void markDirty(LightNode node) {
-		if (access instanceof LevelChunk chunk) {
+		if (access.get() instanceof LevelChunk chunk) {
 			BlockPos pos = node.pos;
 			BlockState state = chunk.getBlockState(node.clampedPos(new BlockPos.MutableBlockPos()).immutable());
 			BlockState dummyState = Blocks.AIR.defaultBlockState();
@@ -106,6 +117,7 @@ public class LightChunk {
 		LightBlock nodules = getLights(relativePos);
 		if (nodules.contains(lightNode))
 			return false;
+		ChunkAccess access = this.access.get();
 		BlockPos minPos = new BlockPos(
 				access.getPos().getMinBlockX(),
 				access.getMinBuildHeight(),

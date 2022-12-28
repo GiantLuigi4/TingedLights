@@ -27,7 +27,7 @@ public class AOFace {
 //		BlockPos lightProbePos = pShapeFlags.get(0) ? pPos.relative(bakedQuad.getDirection()) : pPos;
 		LightManager manager = ((ILightEngine) pLevel.getLightEngine()).getManager();
 		colors = new Color[4];
-		
+
 //		BlockPos blockpos = pShapeFlags.get(0) ? pPos.relative(pDirection) : pPos;
 		BlockPos blockpos = pShapeFlags.get(0) ? pPos.relative(pDirection) : pPos;
 		
@@ -36,7 +36,7 @@ public class AOFace {
 		blockpos$mutableblockpos.set(blockpos);
 		// fallback srcColor
 		Color self = getLightColor(manager, pLevel.getBlockState(blockpos), pLevel, blockpos$mutableblockpos);
-		
+
 //		ModelBlockRenderer.Cache modelblockrenderer$cache = ModelBlockRenderer.CACHE.get();
 		
 		BlockState state;
@@ -178,13 +178,18 @@ public class AOFace {
 			this.colors[modelblockrenderer$ambientvertexremap.vert2] = this.maxBlend(self, corner2Light, corner1Light, trueCorner2, something);
 			this.colors[modelblockrenderer$ambientvertexremap.vert3] = this.maxBlend(self, corner3Light, corner1Light, trueCorner3, something);
 		}
+		for (int i = 0; i < colors.length; i++) {
+			Color color = colors[i];
+			if (color.r() == 0 && color.g() == 0 && color.b() == 0)
+				colors[i] = null;
+		}
 	}
 	
 	protected Color getLightColor(LightManager manager, BlockState blockstate, BlockAndTintGetter pLevel, BlockPos blockpos$mutableblockpos) {
 		// TODO: do this more correctly? cache?
 		return manager.getColor(blockpos$mutableblockpos);
 	}
-
+	
 	protected Color blend(Color color0, Color color1, Color color2, Color color3, float f0, float f1, float f2, float f3) {
 		// TODO: WHAT
 		return blend(color0, color1, color2, color3);
@@ -214,7 +219,7 @@ public class AOFace {
 			gOut = Math.min(gOut, color.g());
 			bOut = Math.min(bOut, color.b());
 		}
-		
+
 //		return new Color(Math.max(rOut, min.r()), Math.max(gOut, min.g()), Math.max(bOut, min.b()));
 		return new Color(rOut, gOut, bOut);
 	}

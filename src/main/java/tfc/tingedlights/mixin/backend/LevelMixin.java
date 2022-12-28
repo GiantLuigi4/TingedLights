@@ -1,6 +1,7 @@
 package tfc.tingedlights.mixin.backend;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -12,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import tfc.tingedlights.api.data.Light;
+import tfc.tingedlights.data.access.IHoldColoredLights;
 import tfc.tingedlights.data.access.LevelWithColoredLightSupport;
 import tfc.tingedlights.data.access.TingedLightsBlockAttachments;
 
@@ -56,9 +58,14 @@ public abstract class LevelMixin {
 					// TODO: optimize (do only when needed)
 					if (pState.getBlock() instanceof TingedLightsBlockAttachments potentialLightSource) {
 						Light light = potentialLightSource.createLight(pState, level, pPos);
-						if (light != null)
+						if (light != null) {
 							lightSupport.addLight(light);
-						else if (needsRecompute) // TODO: may update light method?
+							if (levelchunk instanceof IHoldColoredLights iHoldColoredLights) {
+								int sectionY = (int) SectionPos.blockToSection(light.position().getY());
+								sectionY = levelchunk.getSectionIndex(sectionY);
+								iHoldColoredLights.getSources()[sectionY].add(light);
+							}
+						} else if (needsRecompute) // TODO: may update light method?
 							lightSupport.updateNeighbors(pPos);
 					}
 				}

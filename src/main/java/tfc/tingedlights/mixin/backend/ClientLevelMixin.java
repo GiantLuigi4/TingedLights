@@ -10,6 +10,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -24,7 +25,20 @@ import java.util.function.Supplier;
 
 @Mixin(ClientLevel.class)
 public class ClientLevelMixin implements LevelWithColoredLightSupport {
+	@Unique
 	LightManager manager = new LightManager((Level) (Object) this);
+	
+	// so there's not really any way to know when a client world object is leaving active usage
+	// and thus I use this
+	// couldn't really think of any other way reliable to do it
+	@SuppressWarnings("unused")
+	@Unique
+	Object gcHack = new Object() {
+		@Override
+		protected void finalize() {
+			manager.close();
+		}
+	};
 	
 	@Override
 	public LightManager getManager() {
