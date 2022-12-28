@@ -118,6 +118,7 @@ public class LightChunk {
 		if (nodules.contains(lightNode))
 			return false;
 		ChunkAccess access = this.access.get();
+		if (access == null) return false;
 		BlockPos minPos = new BlockPos(
 				access.getPos().getMinBlockX(),
 				access.getMinBuildHeight(),

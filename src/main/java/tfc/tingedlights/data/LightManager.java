@@ -17,6 +17,7 @@ import tfc.tingedlights.data.access.IHoldColoredLights;
 import tfc.tingedlights.data.struct.LightBlock;
 import tfc.tingedlights.data.struct.LightChunk;
 import tfc.tingedlights.data.struct.LightNode;
+import tfc.tingedlights.data.struct.LightingUpdates;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -30,12 +31,8 @@ public class LightManager {
 	// TODO: priority nodes (nodes near the camera)
 	// TODO: use distance based lights for far away chunks
 	
-	protected final Set<LightNode> freshPriorityNodes = new TreeSet<>(nodeComparator);
-	protected Set<LightNode> priorityNodes = new TreeSet<>(nodeComparator);
-	protected Set<LightNode> addedPriorityNodes = new TreeSet<>(nodeComparator);
-	protected final Set<LightNode> freshNodes = new TreeSet<>(nodeComparator);
-	protected Set<LightNode> newNodes = new TreeSet<>(nodeComparator);
-	protected Set<LightNode> addedNodes = new TreeSet<>(nodeComparator);
+	protected final LightingUpdates priorityUpdates = new LightingUpdates();
+	protected final LightingUpdates regularUpdates = new LightingUpdates();
 	protected final Set<LightBlock> dirtyBlocks = new HashSet<>();
 	
 	protected final Set<LightNode> newlyRemovedNodes = new HashSet<>();
@@ -100,12 +97,12 @@ public class LightManager {
 			return;
 		}
 		if (node.pos.distManhattan(eyeVec3i) > 100) {
-			synchronized (freshNodes) {
-				freshNodes.add(node);
+			synchronized (regularUpdates.freshNodes) {
+				regularUpdates.addFresh(node);
 			}
 		} else {
-			synchronized (freshPriorityNodes) {
-				freshPriorityNodes.add(node);
+			synchronized (priorityUpdates.freshNodes) {
+				priorityUpdates.addFresh(node);
 			}
 		}
 	}
@@ -115,128 +112,133 @@ public class LightManager {
 		Vec3i eyeVec3i = new Vec3i(eyePos.x, eyePos.y, eyePos.z);
 		ChunkPos entityChunk = Minecraft.getInstance().cameraEntity.chunkPosition();
 		
-		synchronized (freshNodes) {
-			synchronized (freshPriorityNodes) {
+		synchronized (regularUpdates.freshNodes) {
+			synchronized (priorityUpdates.freshNodes) {
 				for (LightNode node : nodes) {
 					ChunkPos ps = node.chunk.access.get().getPos();
 					if (Math.abs(ps.x - entityChunk.x) + Math.abs(ps.z - entityChunk.z) > 8) {
 						return;
 					}
 					if (node.pos.distManhattan(eyeVec3i) > 100) {
-						freshNodes.add(node);
+						regularUpdates.addFresh(node);
 					} else {
-						freshPriorityNodes.add(node);
+						priorityUpdates.addFresh(node);
 					}
 				}
 			}
 		}
 	}
 	
-	protected int propagate(Set<LightNode> newNodes, Set<LightNode> addedNodes, int maxUpdates, Set<LightNode> finishedNodes, BlockPos.MutableBlockPos mutableBlockPos, boolean priority, Collection<LightNode> updatedPositions, Collection<LightBlock> updatedLightBlocks) {
-		int updates = 0;
+	protected int propagate(LightingUpdates updates, int maxUpdates, Set<LightNode> finishedNodes, BlockPos.MutableBlockPos mutableBlockPos, boolean priority, Collection<LightNode> updatedPositions, Collection<LightBlock> updatedLightBlocks) {
 		int trueMax = maxUpdates;
-		while (!newNodes.isEmpty()) {
-			nodeLoop:
-			for (LightNode node : newNodes) {
-				finishedNodes.add(node);
-				
-				try {
-					for (Direction direction : DIRECTIONS) {
-						BlockPos immut = new BlockPos(node.pos.getX() + direction.getStepX(), node.pos.getY() + direction.getStepY(), node.pos.getZ() + direction.getStepZ());
-						
-						LightNode nd = node.system().get(immut);
-						if (nd != null) {
-							byte old = nd.brightness();
-							byte current = (byte) (node.brightness() - dimmingAmount(nd.pos, nd.clampedPos(mutableBlockPos), nd.chunk, direction));
-							if (current > old) {
-								nd.setBrightness(current);
-								addedNodes.add(nd);
-							}
-							updatedPositions.add(node);
-							updatedLightBlocks.add(node.chunk.getLightInfo(immut));
-							// TODO: update brightness
-							continue;
-						}
-						
-						node.clampedPos(mutableBlockPos);
-						int rx = immut.getX() & 15;
-						int ry = immut.getY();
-						int rz = immut.getZ() & 15;
-						// TODO: deal with neighbor chunks
-						LightChunk chunk = node.chunk;
-						if (chunk == null) continue; // TODO: queue light propagation
-						if (rx == 15 && mutableBlockPos.getX() == 0) chunk = chunk.south();
-						if (rx == 0 && mutableBlockPos.getX() == 15) chunk = chunk.north();
-						
-						if (rz == 15 && mutableBlockPos.getZ() == 0) chunk = chunk.west();
-						if (rz == 0 && mutableBlockPos.getZ() == 15) chunk = chunk.east();
-						
-						if (chunk == null) continue; // TODO: queue light propagation
-						if (node.brightness() != (byte) 1) {
-							LightNode ref = node.reference();
-							if (ref == null) ref = node;
-							BlockPos relativePos = new BlockPos(rx, ry, rz);
-							ChunkAccess access = chunk.access.get();
-							BlockPos newLightPos = new BlockPos(
-									access.getPos().getBlockX(rx),
-									ry,
-									access.getPos().getBlockZ(rz)
-							);
-							byte val = (byte) (node.brightness() - dimmingAmount(newLightPos, relativePos, chunk, direction));
-							if (val < 1) continue;
-							LightNode node1 = new LightNode(
-									chunk, ref.source,
-									val, newLightPos
-							);
-							if (chunk.addNode(relativePos, node1)) {
+		int trueCount = 0;
+		int addCount = 0;
+		for (int i = updates.newNodes.length - 1; i >= 0; i--) {
+			maxUpdates /= 15;
+			maxUpdates += addCount;
+			addCount = 0;
+			int updateCount = 0;
+			Set<LightNode> newNodes = updates.newNodes[i];
+			Set<LightNode> addedNodes = updates.addedNodes[i];
+			while (!newNodes.isEmpty()) {
+				nodeLoop:
+				for (LightNode node : newNodes) {
+					finishedNodes.add(node);
+					
+					try {
+						for (Direction direction : DIRECTIONS) {
+							BlockPos immut = new BlockPos(node.pos.getX() + direction.getStepX(), node.pos.getY() + direction.getStepY(), node.pos.getZ() + direction.getStepZ());
+							
+							LightNode nd = node.system().get(immut);
+							if (nd != null) {
+								byte old = nd.brightness();
+								byte current = (byte) (node.brightness() - dimmingAmount(nd.pos, nd.clampedPos(mutableBlockPos), nd.chunk, direction));
+								if (current > old) {
+									nd.setBrightness(current);
+									addedNodes.add(nd);
+								}
 								updatedPositions.add(node);
 								updatedLightBlocks.add(node.chunk.getLightInfo(immut));
-								
-								node.addChild(node1);
-								addedNodes.add(node1);
+								// TODO: update brightness
+								continue;
+							}
+							
+							node.clampedPos(mutableBlockPos);
+							int rx = immut.getX() & 15;
+							int ry = immut.getY();
+							int rz = immut.getZ() & 15;
+							// TODO: deal with neighbor chunks
+							LightChunk chunk = node.chunk;
+							if (chunk == null) continue; // TODO: queue light propagation
+							if (rx == 15 && mutableBlockPos.getX() == 0) chunk = chunk.south();
+							if (rx == 0 && mutableBlockPos.getX() == 15) chunk = chunk.north();
+							
+							if (rz == 15 && mutableBlockPos.getZ() == 0) chunk = chunk.west();
+							if (rz == 0 && mutableBlockPos.getZ() == 15) chunk = chunk.east();
+							
+							if (chunk == null) continue; // TODO: queue light propagation
+							if (node.brightness() != (byte) 1) {
+								LightNode ref = node.reference();
+								if (ref == null) ref = node;
+								BlockPos relativePos = new BlockPos(rx, ry, rz);
+								ChunkAccess access = chunk.access.get();
+								BlockPos newLightPos = new BlockPos(
+										access.getPos().getBlockX(rx),
+										ry,
+										access.getPos().getBlockZ(rz)
+								);
+								byte val = (byte) (node.brightness() - dimmingAmount(newLightPos, relativePos, chunk, direction));
+								if (val < 1) continue;
+								LightNode node1 = new LightNode(
+										chunk, ref.source,
+										val, newLightPos
+								);
+								if (chunk.addNode(relativePos, node1)) {
+									updatedPositions.add(node);
+									updatedLightBlocks.add(node.chunk.getLightInfo(immut));
+									
+									node.addChild(node1);
+									addedNodes.add(node1);
+								}
 							}
 						}
+					} catch (Throwable err) {
+						throw new RuntimeException(err);
 					}
-				 } catch (Throwable err) {
-					throw new RuntimeException(err);
+					
+					updateCount++;
+					if (updateCount > maxUpdates) break nodeLoop;
 				}
 				
-				updates++;
-				if (updates > maxUpdates) break nodeLoop;
+				int sz = newNodes.size();
+				if (finishedNodes.size() == newNodes.size()) newNodes.clear();
+				else newNodes.removeAll(finishedNodes);
+				if (sz == newNodes.size()) {
+					// TODO: fix the removeAll call
+					maxUpdates = Integer.MAX_VALUE;
+				}
+//				newNodes.clear();
+				finishedNodes.clear();
+				
+				if (i != 0) {
+					newNodes = updates.newNodes[i - 1];
+					
+					newNodes.addAll(addedNodes);
+					addedNodes.clear();
+				}
+				
+				if (updateCount > maxUpdates) break;
 			}
 			
+			addCount = maxUpdates - updateCount;
+			if (addCount < 0) addCount = 0;
+			trueCount += updateCount;
 			maxUpdates = trueMax;
-			int sz = newNodes.size();
-			if (finishedNodes.size() == newNodes.size()) newNodes.clear();
-			else newNodes.removeAll(finishedNodes);
-			if (sz == newNodes.size()) {
-				// TODO: fix the removeAll call
-				maxUpdates = Integer.MAX_VALUE;
-			}
-//			newNodes.clear();
-			finishedNodes.clear();
 			
-			if (newNodes.size() == 0) {
-				Set<LightNode> temp = addedNodes;
-				addedNodes = newNodes;
-				newNodes = temp;
-			} else {
-				newNodes.addAll(addedNodes);
-				addedNodes.clear();
-			}
-			
-			if (updates > maxUpdates) break;
+			if (updateCount > maxUpdates) break;
 		}
 		
-		if (priority) {
-			this.priorityNodes = newNodes;
-			this.addedPriorityNodes = addedNodes;
-		} else {
-			this.newNodes = newNodes;
-			this.addedNodes = addedNodes;
-		}
-		
-		return updates;
+		return trueCount;
 	}
 	
 	public void runUpdate() {
@@ -251,18 +253,8 @@ public class LightManager {
 //		Collection<LightBlock> dirtyBlocks = this.dirtyBlocks;
 		try {
 			try {
-				if (!freshNodes.isEmpty()) {
-					synchronized (freshNodes) {
-						newNodes.addAll(freshNodes);
-						freshNodes.clear();
-					}
-				}
-				if (!freshPriorityNodes.isEmpty()) {
-					synchronized (freshPriorityNodes) {
-						priorityNodes.addAll(freshPriorityNodes);
-						freshPriorityNodes.clear();
-					}
-				}
+				priorityUpdates.swap();
+				regularUpdates.swap();
 			} catch (Throwable ignored) {
 			}
 			
@@ -276,28 +268,28 @@ public class LightManager {
 			Set<LightNode> updatedPositions = new ObjectOpenCustomHashSet<>(600, nodeStrategy);
 			Set<LightBlock> updatedBlocks = new HashSet<>(600);
 			int maxForPrior = maxUpdates;
-			if (newNodes.size() != 0) maxForPrior /= 1.5;
+			if (regularUpdates.hasAny()) maxForPrior /= 1.5;
 			
 			try {
 				if (!newlyRemovedNodes.isEmpty()) {
 					synchronized (newlyRemovedNodes) {
-						priorityNodes.removeAll(newlyRemovedNodes);
-						newNodes.removeAll(newlyRemovedNodes);
+						priorityUpdates.removeAll(newlyRemovedNodes);
+						regularUpdates.removeAll(newlyRemovedNodes);
 					}
 				}
 			} catch (Throwable ignored) {
 			}
 			
-			maxUpdates -= this.propagate(priorityNodes, addedPriorityNodes, maxForPrior, finishedNodes, mutableBlockPos, true, updatedPositions, updatedBlocks);
-			maxUpdates /= 32;
+			maxUpdates -= this.propagate(priorityUpdates, maxForPrior, finishedNodes, mutableBlockPos, true, updatedPositions, updatedBlocks);
+			maxUpdates /= 16;
 			if (maxUpdates > 0)
-				this.propagate(newNodes, addedNodes, maxUpdates, finishedNodes, mutableBlockPos, false, updatedPositions, updatedBlocks);
+				this.propagate(regularUpdates, maxUpdates, finishedNodes, mutableBlockPos, false, updatedPositions, updatedBlocks);
 			
 			try {
 				if (!newlyRemovedNodes.isEmpty()) {
 					synchronized (newlyRemovedNodes) {
-						priorityNodes.removeAll(newlyRemovedNodes);
-						newNodes.removeAll(newlyRemovedNodes);
+						priorityUpdates.removeAll(newlyRemovedNodes);
+						regularUpdates.removeAll(newlyRemovedNodes);
 						
 						// TODO: testing
 						newlyRemovedNodes.clear();
@@ -317,7 +309,7 @@ public class LightManager {
 				this.updatedBlocks.addAll(updatedPositions);
 			}
 			
-			if (priorityNodes.isEmpty() && newNodes.isEmpty())
+			if (!regularUpdates.hasAny() && !regularUpdates.hasAny())
 				Thread.sleep(1);
 		} catch (Throwable ignored) {
 		}
