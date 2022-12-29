@@ -18,7 +18,8 @@ public class LightingUpdates {
 //			newNodes[i] = new ObjectOpenCustomHashSet<>(FastUtil.nodeStrategy);
 //			newNodes[i] = new ObjectArraySet<>();
 			newNodes[i] = new ObjectArrayList<>();
-			addedNodes[i] = new ObjectOpenCustomHashSet<>(FastUtil.nodeStrategy);
+//			addedNodes[i] = new ObjectOpenCustomHashSet<>(FastUtil.nodeStrategy);
+			addedNodes[i] = new ObjectArrayList<>();
 		}
 	}
 	
@@ -74,15 +75,11 @@ public class LightingUpdates {
 	}
 	
 	public boolean splitWorkload() {
-		for (int i = 5; i < 15; i++) {
-			if (!newNodes[i].isEmpty()) return false;
-		}
-		
 		int totalRemaining = 0;
-		for (int i = 0; i <= 5; i++) {
+		for (int i = 0; i < 15; i++) {
 			totalRemaining += newNodes[i].size();
 		}
-		return totalRemaining <= 10000;
+		return totalRemaining >= 30000;
 	}
 	
 	public boolean allowReversal() {

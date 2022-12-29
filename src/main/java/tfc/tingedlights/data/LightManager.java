@@ -44,45 +44,49 @@ public class LightManager {
 	}
 	
 	protected void handleLightAddition() {
-		if (!addedLights.isEmpty()) {
-			Set<Light> deferFurther = new HashSet<>();
-			/*
-			 * add lights to the light manager
-			 * deferred to avoid potential CMEs, as well as because lights can sometimes be added too early
-			 */
-			for (Light light : addedLights) {
-				LightChunk chunk = lightChunkHashMap.get(new ChunkPos(light.position()));
-				if (chunk == null) {
-					deferFurther.add(light);
-					continue;
-				}
-				LightNode node = new LightNode(
-						chunk,
-						new HashSet<>(),
-						new HashMap<>(),
-						light,
-						light.lightValue(),
-						light.position()
-				);
-				Collection<LightNode> sources = getSources(light.position());
-				if (sources != null) {
-					if (sources.contains(node)) {
-						for (LightNode source : sources) {
-							if (source.equals(node)) {
-								source.remove();
+		synchronized (addedLights) {
+			if (!addedLights.isEmpty()) {
+				Set<Light> deferFurther = new HashSet<>();
+				/*
+				 * add lights to the light manager
+				 * deferred to avoid potential CMEs, as well as because lights can sometimes be added too early
+				 */
+				for (Light light : addedLights) {
+					LightChunk chunk = lightChunkHashMap.get(new ChunkPos(light.position()));
+					if (chunk == null) {
+						deferFurther.add(light);
+						continue;
+					}
+					LightNode node = new LightNode(
+							chunk,
+							new HashSet<>(),
+							new HashMap<>(),
+							light,
+							light.lightValue(),
+							light.position()
+					);
+					Collection<LightNode> sources = getSources(light.position());
+					if (sources != null) {
+						if (sources.contains(node)) {
+							// TODO: figure out where a CME comes from here?
+							// I don't see how it's possible for it to happen
+							for (LightNode source : sources.toArray(new LightNode[0])) {
+								if (source.equals(node)) {
+									source.remove();
+								}
 							}
 						}
 					}
+					node.system().put(node.pos, node);
+					BlockPos relative;
+					chunk.addNode(relative = node.clampedPos(new BlockPos.MutableBlockPos()).immutable(), node);
+					
+					addLightNode(node); // TODO: add in bulk?
+					dirtyBlocks.add(chunk.getLightInfo(relative));
 				}
-				node.system().put(node.pos, node);
-				BlockPos relative;
-				chunk.addNode(relative = node.clampedPos(new BlockPos.MutableBlockPos()).immutable(), node);
-				
-				addLightNode(node); // TODO: add in bulk?
-				dirtyBlocks.add(chunk.getLightInfo(relative));
+				addedLights.clear();
+				addedLights.addAll(deferFurther);
 			}
-			addedLights.clear();
-			addedLights.addAll(deferFurther);
 		}
 	}
 	
@@ -91,11 +95,14 @@ public class LightManager {
 		Vec3i eyeVec3i = new Vec3i(eyePos.x, eyePos.y, eyePos.z);
 		ChunkPos entityChunk = Minecraft.getInstance().cameraEntity.chunkPosition();
 		
-		ChunkPos ps = node.chunk.access.get().getPos();
-		if (Math.abs(ps.x - entityChunk.x) + Math.abs(ps.z - entityChunk.z) > 8) {
+		ChunkAccess access = node.chunk.access.get();
+		if (access == null) return;
+		ChunkPos ps = access.getPos();
+		int distance = Math.abs(ps.x - entityChunk.x) + Math.abs(ps.z - entityChunk.z);
+		if (distance > 8) {
 			return;
 		}
-		if (node.pos.distManhattan(eyeVec3i) > 100) {
+		if (distance > 4) {
 			synchronized (regularUpdates.freshNodes) {
 				regularUpdates.addFresh(node);
 			}
@@ -104,6 +111,7 @@ public class LightManager {
 				priorityUpdates.addFresh(node);
 			}
 		}
+		newlyRemovedNodes.remove(node);
 	}
 	
 	public void bulkAddNodes(Collection<LightNode> nodes) {
@@ -115,10 +123,11 @@ public class LightManager {
 			synchronized (priorityUpdates.freshNodes) {
 				for (LightNode node : nodes) {
 					ChunkPos ps = node.chunk.access.get().getPos();
-					if (Math.abs(ps.x - entityChunk.x) + Math.abs(ps.z - entityChunk.z) > 8) {
+					int distance = Math.abs(ps.x - entityChunk.x) + Math.abs(ps.z - entityChunk.z);
+					if (distance > 8) {
 						return;
 					}
-					if (node.pos.distManhattan(eyeVec3i) > 100) {
+					if (distance > 4) {
 						regularUpdates.addFresh(node);
 					} else {
 						priorityUpdates.addFresh(node);
@@ -126,16 +135,19 @@ public class LightManager {
 				}
 			}
 		}
+		newlyRemovedNodes.removeAll(nodes);
 	}
 	
 	// TODO: smth jank, also slow
 	protected int propagate(LightingUpdates updates, int maxUpdates, Set<LightNode> finishedNodes, BlockPos.MutableBlockPos mutableBlockPos, boolean priority, Collection<LightNode> updatedPositions, Collection<LightBlock> updatedLightBlocks) {
 		updates.tick();
+		Random random = new Random();
 		int trueMax = maxUpdates;
 		int trueCount = 0;
 		int addCount = 0;
 		int maxPerIter = maxUpdates;
-		if (updates.splitWorkload()) maxPerIter /= 5;
+		if (updates.splitWorkload()) maxPerIter /= 15;
+//		maxPerIter /= 15;
 		// true: more stutter, but more even framerate during propagation
 		// false: "more" performance, less stutter, but when switching between layers, it lags a lot for a bit
 		boolean forwards = updates.allowReversal(); // helps reduce perceived lag, at the cost of recomputing light values several times
@@ -234,6 +246,7 @@ public class LightManager {
 			
 			if (i != 0) {
 				newNodes = updates.newNodes[i - 1];
+//				newNodes = updates.newNodes[random.nextInt(15)];
 				
 				// shift the node to the next list of lights to propagate
 				newNodes.addAll(addedNodes);
@@ -272,7 +285,7 @@ public class LightManager {
 			}
 			
 			int maxPerSource = 3000; // TODO: find a more exact calculation
-			int expOut = maxPerSource * 4;
+			int expOut = maxPerSource * 8;
 			int maxUpdates = expOut;
 			
 			Set<LightNode> finishedNodes = new ObjectOpenCustomHashSet<>(600, FastUtil.nodeStrategy);
@@ -416,7 +429,9 @@ public class LightManager {
 	private final BlockPos.MutableBlockPos posRender = new BlockPos.MutableBlockPos();
 	
 	public void addLight(Light light) {
-		addedLights.add(light);
+		synchronized (addedLights) {
+			addedLights.add(light);
+		}
 	}
 	
 	public Collection<LightNode> getSources(BlockPos pos) {

@@ -50,6 +50,17 @@ public abstract class LightProvider {
 	public boolean needsUpdate(BlockState pState, BlockState pOld, Level pLevel, BlockPos pPos) {
 		if (pOld instanceof TingedLightsBlockAttachments yep)
 			yep.providesLight(pOld, pLevel, pPos);
-		return !pState.equals(pOld);
+		if (!pState.equals(pOld)) {
+			// TODO: not sure if this check is worth while
+			if (pOld.getBlock() instanceof TingedLightsBlockAttachments attachments) {
+				if (attachments.providesLight(pOld, pLevel, pPos)) {
+					return true;
+				}
+			}
+			int oldLb = pOld.getLightBlock(pLevel, pPos);
+			int newLb = pState.getLightBlock(pLevel, pPos);
+			return oldLb != newLb;
+		}
+		return false;
 	}
 }

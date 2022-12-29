@@ -5,6 +5,7 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.LightManager;
@@ -64,23 +65,23 @@ public class AOFace {
 		// check light blocking blocks
 		// update corner colors based off that
 		state = pLevel.getBlockState(blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[0]));
-		lb = state.getLightBlock(pLevel, blockpos$mutableblockpos);
-		if (lb != 0 /* TODO: find a good threshold */) corner0Light = self; // set fallback
+		lb = lightObstruction(state, pLevel, blockpos$mutableblockpos);
+		if (lb == 15 /* TODO: find a good threshold */) corner0Light = self; // set fallback
 		boolean flag = !state.isViewBlocking(pLevel, blockpos$mutableblockpos) || lb == 0;
 		
 		state = pLevel.getBlockState(blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[1]));
-		lb = state.getLightBlock(pLevel, blockpos$mutableblockpos);
-		if (lb != 0) corner1Light = self; // set fallback
+		lb = lightObstruction(state, pLevel, blockpos$mutableblockpos);
+		if (lb == 15) corner1Light = self; // set fallback
 		boolean flag1 = !state.isViewBlocking(pLevel, blockpos$mutableblockpos) || lb == 0;
 		
 		state = pLevel.getBlockState(blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[2]));
-		lb = state.getLightBlock(pLevel, blockpos$mutableblockpos);
-		if (lb != 0) corner2Light = self; // set fallback
+		lb = lightObstruction(state, pLevel, blockpos$mutableblockpos);
+		if (lb == 15) corner2Light = self; // set fallback
 		boolean flag2 = !state.isViewBlocking(pLevel, blockpos$mutableblockpos) || lb == 0;
 		
 		state = pLevel.getBlockState(blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[3]));
-		lb = state.getLightBlock(pLevel, blockpos$mutableblockpos);
-		if (lb != 0) corner3Light = self; // set fallback
+		lb = lightObstruction(state, pLevel, blockpos$mutableblockpos);
+		if (lb == 15) corner3Light = self; // set fallback
 		boolean flag3 = !state.isViewBlocking(pLevel, blockpos$mutableblockpos) || lb == 0;
 		
 		Color trueColor0;
@@ -89,10 +90,10 @@ public class AOFace {
 		} else {
 			blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[0]).move(modelblockrenderer$adjacencyinfo.corners[2]);
 			state = pLevel.getBlockState(blockpos$mutableblockpos);
-			if (state.getLightBlock(pLevel, blockpos$mutableblockpos) == 0) {
-				trueColor0 = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
-			} else {
+			if (lightObstruction(state, pLevel, blockpos$mutableblockpos) == 15) {
 				trueColor0 = self;
+			} else {
+				trueColor0 = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
 			}
 		}
 		
@@ -102,10 +103,10 @@ public class AOFace {
 		} else {
 			blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[0]).move(modelblockrenderer$adjacencyinfo.corners[3]);
 			state = pLevel.getBlockState(blockpos$mutableblockpos);
-			if (state.getLightBlock(pLevel, blockpos$mutableblockpos) == 0) {
-				trueCorner1 = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
-			} else {
+			if (lightObstruction(state, pLevel, blockpos$mutableblockpos) == 15) {
 				trueCorner1 = self;
+			} else {
+				trueCorner1 = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
 			}
 		}
 		
@@ -115,10 +116,10 @@ public class AOFace {
 		} else {
 			blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[1]).move(modelblockrenderer$adjacencyinfo.corners[2]);
 			state = pLevel.getBlockState(blockpos$mutableblockpos);
-			if (state.getLightBlock(pLevel, blockpos$mutableblockpos) == 0) {
-				trueCorner2 = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
-			} else {
+			if (lightObstruction(state, pLevel, blockpos$mutableblockpos) == 15) {
 				trueCorner2 = self;
+			} else {
+				trueCorner2 = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
 			}
 		}
 		
@@ -128,10 +129,10 @@ public class AOFace {
 		} else {
 			blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[1]).move(modelblockrenderer$adjacencyinfo.corners[3]);
 			state = pLevel.getBlockState(blockpos$mutableblockpos);
-			if (state.getLightBlock(pLevel, blockpos$mutableblockpos) == 0) {
-				trueCorner3 = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
-			} else {
+			if (lightObstruction(state, pLevel, blockpos$mutableblockpos) == 15) {
 				trueCorner3 = self;
+			} else {
+				trueCorner3 = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
 			}
 		}
 		
@@ -183,6 +184,13 @@ public class AOFace {
 			if (color.r() == 0 && color.g() == 0 && color.b() == 0)
 				colors[i] = null;
 		}
+	}
+	
+	protected int lightObstruction(BlockState state, BlockAndTintGetter pLevel, BlockPos blockPos) {
+		if (state.getBlock().equals(Blocks.WATER))
+			return 0; // TODO: I'd like to make this a bit less hardcoded if possible
+		int lb = state.getLightBlock(pLevel, blockPos);
+		return lb;
 	}
 	
 	protected Color getLightColor(LightManager manager, BlockState blockstate, BlockAndTintGetter pLevel, BlockPos blockpos$mutableblockpos) {

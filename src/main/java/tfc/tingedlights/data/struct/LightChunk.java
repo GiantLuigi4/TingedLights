@@ -11,8 +11,8 @@ import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.access.IHoldColoredLights;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 
 public class LightChunk {
 	LightLookup nodes = new LightLookup();
@@ -156,7 +156,7 @@ public class LightChunk {
 	LightBlock getLights(BlockPos pos) {
 		// TODO: check performance overhead of computeIfAbsent
 		LightBlock nodules = nodes.get(pos);
-		if (nodules == null) nodes.put(pos, nodules = new LightBlock(new HashSet<>()));
+		if (nodules == null) nodes.put(pos, nodules = new LightBlock(new ArrayList<>()));
 		return nodules;
 	}
 	

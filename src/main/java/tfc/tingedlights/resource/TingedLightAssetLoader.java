@@ -92,13 +92,14 @@ public class TingedLightAssetLoader extends SimpleJsonResourceReloadListener {
 		// TODO: only update blocks that actually were light sources before resource reload
 		for (Block block : Registry.BLOCK) {
 			if (block instanceof TingedLightsBlockAttachments attachments) {
-				attachments.setFunctions(defaultLightProvider, defaultIsSource, defaultUpdateChecker);
 				if (providerHashMap.containsKey(block)) {
 					// TODO: optimize mem usage (deduplicate functions)
 					LightProvider provider = providerHashMap.get(block);
 					if (provider instanceof PerStateLightProvider perState)
 						provider = perState.maybeBake();
 					attachments.setFunctions(provider::createLight, provider::providesLight, provider::needsUpdate);
+				} else {
+					attachments.setFunctions(defaultLightProvider, defaultIsSource, defaultUpdateChecker);
 				}
 			}
 		}
