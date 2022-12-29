@@ -1,5 +1,6 @@
 package tfc.tingedlights.data.struct;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import tfc.tingedlights.data.FastUtil;
 
@@ -7,15 +8,16 @@ import java.util.Collection;
 import java.util.Set;
 
 public class LightingUpdates {
-	public final Collection<LightNode>[] freshNodes = new Set[15];
-	public Collection<LightNode>[] newNodes = new Set[15];
-	public Collection<LightNode>[] addedNodes = new Set[15];
+	public final Collection<LightNode>[] freshNodes = new Collection[15];
+	public Collection<LightNode>[] newNodes = new Collection[15];
+	public Collection<LightNode>[] addedNodes = new Collection[15];
 	
 	public LightingUpdates() {
 		for (int i = 0; i < freshNodes.length; i++) {
 			freshNodes[i] = new ObjectOpenCustomHashSet<>(FastUtil.nodeStrategy);
-			newNodes[i] = new ObjectOpenCustomHashSet<>(FastUtil.nodeStrategy);
+//			newNodes[i] = new ObjectOpenCustomHashSet<>(FastUtil.nodeStrategy);
 //			newNodes[i] = new ObjectArraySet<>();
+			newNodes[i] = new ObjectArrayList<>();
 			addedNodes[i] = new ObjectOpenCustomHashSet<>(FastUtil.nodeStrategy);
 		}
 	}
@@ -89,6 +91,7 @@ public class LightingUpdates {
 		for (int i = 0; i < 15; i++) {
 			totalRemaining += newNodes[i].size();
 		}
-		return totalRemaining >= 300000;
+//		return totalRemaining >= 300000;
+		return false;
 	}
 }
