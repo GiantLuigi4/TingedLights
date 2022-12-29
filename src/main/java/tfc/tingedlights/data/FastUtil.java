@@ -56,11 +56,12 @@ public class FastUtil {
 		@Override
 		public int hashCode(LightNode o) {
 			if (o == null) return 0;
-			return (
-					((((o.pos.getX() & 127) * 127) +
-							((o.pos.getY() & 127) * 127)) +
-							((o.pos.getZ() & 127)))
-			) * o.brightness();
+			return o.hash;
+//			return (
+//					((((o.pos.getX() & 127) * 127) +
+//							((o.pos.getY() & 127) * 127)) +
+//							((o.pos.getZ() & 127)))
+//			) * o.brightness();
 		}
 		
 		@Override

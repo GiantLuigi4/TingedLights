@@ -132,14 +132,18 @@ public class LightManager {
 		int trueMax = maxUpdates;
 		int trueCount = 0;
 		int addCount = 0;
-		int maxPerIter = maxUpdates / 1;
-		for (int i = updates.newNodes.length - 1; i >= 0; i--) {
-//			maxUpdates = maxPerIter;
+		int maxPerIter = maxUpdates;
+		if (updates.splitWorkload()) maxPerIter /= 5;
+		// true: more stutter, but more even framerate during propagation
+		// false: "more" performance, less stutter, but when switching between layers, it lags a lot for a bit
+		boolean forwards = !updates.allowReversal(); // helps reduce perceived lag, at the cost of recomputing light values several times
+		for (int i = forwards ? 0 : 14; forwards ? (i < 15) : (i >= 0); i = i + (forwards ? 1 : -1)) {
+			maxUpdates = maxPerIter;
 //			maxUpdates += addCount;
 			
 			int updateCount = 0;
-			Set<LightNode> newNodes = updates.newNodes[i];
-			Set<LightNode> addedNodes = updates.addedNodes[i];
+			Collection<LightNode> newNodes = updates.newNodes[i];
+			Collection<LightNode> addedNodes = updates.addedNodes[i];
 			
 			nodeLoop:
 			for (LightNode node : newNodes) {
@@ -266,7 +270,7 @@ public class LightManager {
 			}
 			
 			int maxPerSource = 3000; // TODO: find a more exact calculation
-			int expOut = maxPerSource * 4;
+			int expOut = maxPerSource * 8;
 			int maxUpdates = expOut;
 			
 			Set<LightNode> finishedNodes = new ObjectOpenCustomHashSet<>(600, FastUtil.nodeStrategy);

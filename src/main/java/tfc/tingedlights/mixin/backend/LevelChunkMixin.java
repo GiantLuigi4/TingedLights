@@ -56,15 +56,17 @@ public abstract class LevelChunkMixin implements IHoldColoredLights {
 	
 	@Inject(at = @At("TAIL"), method = "replaceWithPacketData")
 	public void postReplace(FriendlyByteBuf pBuffer, CompoundTag pTag, Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> p_187974_, CallbackInfo ci) {
+		// TODO: I'd love to put this on another thread
 		try {
 			LevelChunk lvlChunk = (LevelChunk) (Object) this;
 			for (LevelChunkSection section : lvlChunk.getSections()) {
+				int sectionY = (int) SectionPos.blockToSection(section.bottomBlockY());
+				sectionY = lvlChunk.getSectionIndex(sectionY);
+				
+				sources[sectionY] = new HashSet<>();
 				if (section.hasOnlyAir()) continue;
 				
 				BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
-				
-				int sectionY = (int) SectionPos.blockToSection(section.bottomBlockY());
-				sectionY = lvlChunk.getSectionIndex(sectionY);
 				
 				for (int x = 0; x < 16; x++) {
 					for (int y = 0; y < 16; y++) {
