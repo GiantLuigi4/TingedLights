@@ -20,6 +20,28 @@ public class LightingUpdates {
 		}
 	}
 	
+	boolean natural = true;
+	boolean passed = false;
+	
+	public void tick() {
+		if (!passed) {
+			for (Collection<LightNode> newNode : newNodes) {
+				if (!newNode.isEmpty()) {
+					passed = true;
+					return;
+				}
+			}
+		}
+		if (natural) {
+			for (Collection<LightNode> newNode : newNodes) {
+				if (!newNode.isEmpty()) {
+					return;
+				}
+			}
+			natural = false;
+		}
+	}
+	
 	public void addFresh(LightNode node) {
 		freshNodes[node.brightness() - 1].add(node);
 	}
@@ -62,10 +84,11 @@ public class LightingUpdates {
 	}
 	
 	public boolean allowReversal() {
+		if (!natural) return false;
 		int totalRemaining = 0;
 		for (int i = 0; i < 15; i++) {
 			totalRemaining += newNodes[i].size();
 		}
-		return totalRemaining >= 30000000;
+		return totalRemaining >= 300000;
 	}
 }

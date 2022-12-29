@@ -128,7 +128,9 @@ public class LightManager {
 		}
 	}
 	
+	// TODO: smth jank, also slow
 	protected int propagate(LightingUpdates updates, int maxUpdates, Set<LightNode> finishedNodes, BlockPos.MutableBlockPos mutableBlockPos, boolean priority, Collection<LightNode> updatedPositions, Collection<LightBlock> updatedLightBlocks) {
+		updates.tick();
 		int trueMax = maxUpdates;
 		int trueCount = 0;
 		int addCount = 0;
@@ -136,7 +138,7 @@ public class LightManager {
 		if (updates.splitWorkload()) maxPerIter /= 5;
 		// true: more stutter, but more even framerate during propagation
 		// false: "more" performance, less stutter, but when switching between layers, it lags a lot for a bit
-		boolean forwards = !updates.allowReversal(); // helps reduce perceived lag, at the cost of recomputing light values several times
+		boolean forwards = updates.allowReversal(); // helps reduce perceived lag, at the cost of recomputing light values several times
 		for (int i = forwards ? 0 : 14; forwards ? (i < 15) : (i >= 0); i = i + (forwards ? 1 : -1)) {
 			maxUpdates = maxPerIter;
 //			maxUpdates += addCount;
@@ -270,7 +272,7 @@ public class LightManager {
 			}
 			
 			int maxPerSource = 3000; // TODO: find a more exact calculation
-			int expOut = maxPerSource * 8;
+			int expOut = maxPerSource * 4;
 			int maxUpdates = expOut;
 			
 			Set<LightNode> finishedNodes = new ObjectOpenCustomHashSet<>(600, FastUtil.nodeStrategy);
