@@ -7,11 +7,11 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
+import org.antlr.v4.runtime.misc.Array2DHashSet;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.access.IHoldColoredLights;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.Collection;
 
 public class LightChunk {
@@ -95,7 +95,7 @@ public class LightChunk {
 			if (nodule.reference() == nodule) {
 				if (access.get() instanceof IHoldColoredLights iHoldColoredLights) {
 					int section = (int) SectionPos.blockToSection(nodule.pos.getY());
-					int sectionLook = access.get().getSectionIndex(section);
+					int sectionLook = access.get().getSectionIndexFromSectionY(section);
 					iHoldColoredLights.getSources()[sectionLook].remove(nodule.light());
 				}
 			}
@@ -156,8 +156,12 @@ public class LightChunk {
 	LightBlock getLights(BlockPos pos) {
 		// TODO: check performance overhead of computeIfAbsent
 		LightBlock nodules = nodes.get(pos);
-		if (nodules == null) nodes.put(pos, nodules = new LightBlock(new ArrayList<>()));
+		if (nodules == null) nodes.put(pos, nodules = new LightBlock(new Array2DHashSet<>()));
 		return nodules;
+	}
+	
+	public void clear() {
+		nodes.clear();
 	}
 	
 	public void onUnload() {

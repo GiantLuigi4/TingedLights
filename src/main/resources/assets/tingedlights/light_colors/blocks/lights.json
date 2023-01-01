@@ -1,13 +1,21 @@
 {
   "tingedlights:default": {
     "start": [252, 252, 252],
-    "end": [45.0, 36.0, 29.0, 2.5],
+    "end": [46, 20, 0, 5.6],
     "transition_start": 14,
     "brightness": -1,
     "distance_fade": false
   },
   "minecraft:glow_lichen": {
     "color": [173, 174, 140],
+    "brightness": -1
+  },
+  "minecraft:cave_vines": {
+    "color": [234, 136, 51],
+    "brightness": -1
+  },
+  "minecraft:cave_vines_plant": {
+    "color": [234, 136, 51],
     "brightness": -1
   },
   "minecraft:glowstone": {
@@ -22,6 +30,18 @@
   },
   "minecraft:nether_portal": {
     "color": [128, 49, 193],
+    "brightness": -1
+  },
+  "minecraft:enchanting_table": {
+    "color": [255, 255, 255],
+    "brightness": -1
+  },
+  "minecraft:magma_block": {
+    "color": [212, 61, 10],
+    "brightness": -1
+  },
+  "minecraft:lava_cauldron": {
+    "color": [202, 61, 10],
     "brightness": -1
   }
 }

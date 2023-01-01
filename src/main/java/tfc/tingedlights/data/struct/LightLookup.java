@@ -32,4 +32,8 @@ public class LightLookup {
 		if (theMap == null) map.put(sectionY, theMap = new HashMap<>());
 		return theMap.put(clamped, lightBlock);
 	}
+	
+	public void clear() {
+		map.clear();
+	}
 }

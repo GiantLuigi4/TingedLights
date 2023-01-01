@@ -2,10 +2,10 @@ package tfc.tingedlights.data.struct;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import org.antlr.v4.runtime.misc.Array2DHashSet;
 import tfc.tingedlights.data.FastUtil;
 
 import java.util.Collection;
-import java.util.Set;
 
 public class LightingUpdates {
 	public final Collection<LightNode>[] freshNodes = new Collection[15];
@@ -14,9 +14,10 @@ public class LightingUpdates {
 	
 	public LightingUpdates() {
 		for (int i = 0; i < freshNodes.length; i++) {
+//			freshNodes[i] = new Array2DHashSet<>(FastUtil.nodeEquality);
 			freshNodes[i] = new ObjectOpenCustomHashSet<>(FastUtil.nodeStrategy);
+//			freshNodes[i] = new ObjectArrayList<>();
 //			newNodes[i] = new ObjectOpenCustomHashSet<>(FastUtil.nodeStrategy);
-//			newNodes[i] = new ObjectArraySet<>();
 			newNodes[i] = new ObjectArrayList<>();
 //			addedNodes[i] = new ObjectOpenCustomHashSet<>(FastUtil.nodeStrategy);
 			addedNodes[i] = new ObjectArrayList<>();
@@ -68,9 +69,16 @@ public class LightingUpdates {
 		return false;
 	}
 	
-	public void removeAll(Set<LightNode> newlyRemovedNodes) {
-		for (Collection<LightNode> newNode : newNodes) {
-			newNode.removeAll(newlyRemovedNodes);
+	public void removeAll(Collection<LightNode> newlyRemovedNodes) {
+		for (int i = 0; i < newNodes.length; i++) {
+			Collection<LightNode> newNode = newNodes[i];
+
+//			Collection<LightNode> newNode1 = new Array3dHashSet<>(FastUtil.nodeEquality3D);
+			Collection<LightNode> newNode1 = new Array2DHashSet<>(FastUtil.nodeEquality);
+			newNode1.addAll(newNode);
+			newNode1.removeAll(newlyRemovedNodes);
+			
+			newNodes[i] = new ObjectArrayList<>(newNode1);
 		}
 	}
 	

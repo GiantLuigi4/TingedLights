@@ -9,7 +9,10 @@
   },
   "minecraft:redstone_ore": {
     "color": [255, 25, 0],
-    "brightness": -1
+    "brightness": -1,
+    "state": {
+      "lit": true
+    }
   },
   "minecraft:deepslate_redstone_ore": {
     "color": [255, 25, 0],

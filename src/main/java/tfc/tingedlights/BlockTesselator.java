@@ -54,6 +54,11 @@ public class BlockTesselator {
 //			lightmap[i] = LightTexture.pack(0, unpacked);
 		}
 		
+		if (!(pConsumer instanceof VertexBufferConsumerExtensions)) {
+			pConsumer.putBulkData(pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, 1, lightmap, pPackedOverlay, true);
+			return;
+		}
+		
 		VertexBufferConsumerExtensions extensions = ((VertexBufferConsumerExtensions) pConsumer);
 		
 		if (face != null) {

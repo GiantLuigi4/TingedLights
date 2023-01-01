@@ -175,6 +175,8 @@ public class TingedLightAssetLoader extends SimpleJsonResourceReloadListener {
 				
 				@Override
 				public boolean providesLight(BlockState pState, Level pLevel, BlockPos pPos) {
+					int emit = pState.getLightEmission(pLevel, pPos);
+					if (emit == 0) return false;
 					return true;
 				}
 			});

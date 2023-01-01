@@ -78,7 +78,7 @@ public abstract class LevelMixin {
 							lightSupport.addLight(light);
 							if (levelchunk instanceof IHoldColoredLights iHoldColoredLights) {
 								int sectionY = (int) SectionPos.blockToSection(light.position().getY());
-								sectionY = levelchunk.getSectionIndex(sectionY);
+								sectionY = levelchunk.getSectionIndexFromSectionY(sectionY);
 								iHoldColoredLights.getSources()[sectionY].add(light);
 							}
 						} else if (needsRecompute) // TODO: may update light method?

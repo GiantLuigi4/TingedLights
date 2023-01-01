@@ -74,12 +74,14 @@ public abstract class LevelChunkMixin implements IHoldColoredLights {
 		Collection<Light>[] newSources = new Collection[sources.length];
 		for (LevelChunkSection section : lvlChunk.getSections()) {
 			int sectionY = (int) SectionPos.blockToSection(section.bottomBlockY());
-			sectionY = lvlChunk.getSectionIndex(sectionY);
+			sectionY = lvlChunk.getSectionIndexFromSectionY(sectionY);
 			
 			newSources[sectionY] = new HashSet<>();
 			if (section.hasOnlyAir()) continue;
 			
 			BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
+			
+			LightManager manager = ((ILightEngine) lvlChunk.getLevel().getLightEngine()).getManager();
 			
 			for (int x = 0; x < 16; x++) {
 				for (int y = 0; y < 16; y++) {
@@ -91,7 +93,6 @@ public abstract class LevelChunkMixin implements IHoldColoredLights {
 								z + lvlChunk.getPos().getMinBlockZ()
 						);
 						
-						LightManager manager = ((ILightEngine) lvlChunk.getLevel().getLightEngine()).getManager();
 						if (state.getBlock() instanceof TingedLightsBlockAttachments attachments) {
 							if (attachments.providesLight(state, lvlChunk.getLevel(), blockPos)) {
 								// makes sure the mutable pos is still in the right spot
@@ -103,7 +104,6 @@ public abstract class LevelChunkMixin implements IHoldColoredLights {
 								
 								Light light = attachments.createLight(state, lvlChunk.getLevel(), blockPos.immutable());
 								if (light != null) {
-									manager.addLight(light);
 									newSources[sectionY].add(light);
 								}
 							}
@@ -111,8 +111,12 @@ public abstract class LevelChunkMixin implements IHoldColoredLights {
 					}
 				}
 			}
+			
+			sources[sectionY] = newSources[sectionY];
+			for (Light light : sources[sectionY]) {
+				manager.addLight(light);
+			}
 		}
-		System.arraycopy(newSources, 0, sources, 0, sources.length);
 	}
 	
 	@Inject(at = @At("TAIL"), method = "replaceWithPacketData")

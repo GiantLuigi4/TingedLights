@@ -1,0 +1,43 @@
+{
+  "minecraft:crying_obsidian": {
+    "color": [96, 12, 169],
+    "brightness": -1
+  },
+  "minecraft:respawn_anchor": [
+    {
+      "color": [96.0, 12.0, 169.0],
+      "brightness": 2,
+      "state": {
+        "charges": 0
+      }
+    },
+    {
+      "color": [96.0, 12.0, 169.0],
+      "brightness": -1,
+      "state": {
+        "charges": 1
+      }
+    },
+    {
+      "color": [134.5, 63.25, 156.25],
+      "brightness": -1,
+      "state": {
+        "charges": 2
+      }
+    },
+    {
+      "color": [173.0, 114.5, 143.5],
+      "brightness": -1,
+      "state": {
+        "charges": 3
+      }
+    },
+    {
+      "color": [211.5, 165.75, 130.75],
+      "brightness": -1,
+      "state": {
+        "charges": 4
+      }
+    }
+  ]
+}

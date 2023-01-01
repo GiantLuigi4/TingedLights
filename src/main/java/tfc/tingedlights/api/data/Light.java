@@ -3,8 +3,6 @@ package tfc.tingedlights.api.data;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import org.jetbrains.annotations.NotNull;
-import tfc.tingedlights.LightBlender;
-import tfc.tingedlights.MathUtils;
 import tfc.tingedlights.data.Color;
 
 import java.util.Objects;
@@ -38,7 +36,7 @@ public final class Light extends AbstractLight {
 	}
 	
 	protected Color calcColor(byte brightness) {
-		int dist = brightness;
+		int dist = brightness + 1;
 		if (dist < 0) dist = 0;
 		if (dist > 15) dist = 15;
 		

@@ -1,7 +1,9 @@
 package tfc.tingedlights.data;
 
 import it.unimi.dsi.fastutil.Hash;
+import org.antlr.v4.runtime.misc.AbstractEqualityComparator;
 import tfc.tingedlights.data.struct.LightNode;
+import tfc.tingedlights.util.set.HashAlgorithm;
 
 import java.util.Comparator;
 
@@ -50,6 +52,49 @@ public class FastUtil {
 			}
 		}
 		return v;
+	};
+	
+	public static final AbstractEqualityComparator<LightNode> nodeEquality = new AbstractEqualityComparator<LightNode>() {
+		@Override
+		public int hashCode(LightNode o) {
+			if (o == null) return 0;
+			return o.hash;
+//			return (
+//					((((o.pos.getX() & 127) * 127) +
+//							((o.pos.getY() & 127) * 127)) +
+//							((o.pos.getZ() & 127)))
+//			) * o.brightness();
+		}
+		
+		@Override
+		public boolean equals(LightNode a, LightNode b) {
+			if (a == b) return true;
+			if (a == null) return false;
+			if (b == null) return false;
+			return
+					a.pos.getX() == b.pos.getX() &&
+							a.pos.getY() == b.pos.getY() &&
+							a.pos.getZ() == b.pos.getZ() &&
+							a.light().equals(b.light())
+					;
+		}
+	};
+	
+	public static HashAlgorithm<LightNode> nodeEquality3D = new HashAlgorithm<>() {
+		@Override
+		public int hash0(LightNode obj) {
+			return obj.brightness();
+		}
+		
+		@Override
+		public int hash1(LightNode obj) {
+			return obj.hash;
+		}
+		
+		@Override
+		public boolean equals(LightNode obj0, LightNode obj1) {
+			return obj0.equals(obj1);
+		}
 	};
 	
 	public static final Hash.Strategy<LightNode> nodeStrategy = new Hash.Strategy<LightNode>() {

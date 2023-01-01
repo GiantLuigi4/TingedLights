@@ -1,6 +1,5 @@
 package tfc.tingedlights.data;
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -11,6 +10,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.phys.Vec3;
+import org.antlr.v4.runtime.misc.Array2DHashSet;
 import tfc.tingedlights.api.data.Light;
 import tfc.tingedlights.data.access.IHoldColoredLights;
 import tfc.tingedlights.data.struct.LightBlock;
@@ -32,16 +32,18 @@ public class LightManager {
 	
 	protected final LightingUpdates priorityUpdates = new LightingUpdates();
 	protected final LightingUpdates regularUpdates = new LightingUpdates();
-	protected final Set<LightBlock> dirtyBlocks = new HashSet<>();
+	protected final Collection<LightBlock> dirtyBlocks = new ArrayList<>();
 	
-	protected final Set<LightNode> newlyRemovedNodes = new HashSet<>();
-	protected final Set<Light> addedLights = new HashSet<>();
+	protected final Collection<LightNode> newlyRemovedNodes = new ArrayList<>();
+	protected final Collection<Light> addedLights = new ArrayList<>();
 	
-	protected final List<LightNode> updatedBlocks = new ArrayList<>();
+	protected final Collection<LightNode> updatedBlocks = new ArrayList<>();
 	
 	protected int distance(ChunkPos pos0, ChunkPos pos1) {
 		return Math.abs(pos0.x - pos1.x) + Math.abs(pos0.z - pos1.z);
 	}
+	
+	ChunkPos currentPos = null;
 	
 	protected void handleLightAddition() {
 		synchronized (addedLights) {
@@ -59,7 +61,7 @@ public class LightManager {
 					}
 					LightNode node = new LightNode(
 							chunk,
-							new HashSet<>(),
+							new Array2DHashSet<>(),
 							new HashMap<>(),
 							light,
 							light.lightValue(),
@@ -146,8 +148,8 @@ public class LightManager {
 		int trueCount = 0;
 		int addCount = 0;
 		int maxPerIter = maxUpdates;
-		if (updates.splitWorkload()) maxPerIter /= 15;
-//		maxPerIter /= 15;
+//		if (updates.splitWorkload()) maxPerIter /= 15;
+		maxPerIter /= 15;
 		// true: more stutter, but more even framerate during propagation
 		// false: "more" performance, less stutter, but when switching between layers, it lags a lot for a bit
 		boolean forwards = updates.allowReversal(); // helps reduce perceived lag, at the cost of recomputing light values several times
@@ -206,6 +208,8 @@ public class LightManager {
 							if (ref == null) ref = node;
 							BlockPos relativePos = new BlockPos(rx, ry, rz);
 							ChunkAccess access = chunk.access.get();
+							if (access == null) continue;
+							
 							BlockPos newLightPos = new BlockPos(
 									access.getPos().getBlockX(rx),
 									ry,
@@ -267,6 +271,51 @@ public class LightManager {
 		return trueCount;
 	}
 	
+	protected void checkPlayerMotion() {
+		// TODO: deal with mods that render the world multiple times
+		if (currentPos == null || !currentPos.equals(Minecraft.getInstance().cameraEntity.chunkPosition())) {
+			currentPos = Minecraft.getInstance().cameraEntity.chunkPosition();
+			for (int xO = -8; xO <= 8; xO++) {
+				for (int zO = -8; zO <= 8; zO++) {
+					ChunkPos ps = new ChunkPos(
+							currentPos.x + xO,
+							currentPos.z + zO
+					);
+					LightChunk chunk = lightChunkHashMap.get(ps);
+					if (chunk == null) continue;
+					int d = distance(ps, currentPos);
+					
+					ChunkAccess access = chunk.access.get();
+					if (access == null) continue;
+					
+					if (d > 9) {
+						chunk.clear();
+					} else if (d == 8) {
+						// TODO: mark edges dirty (somehow)
+						for (Collection<Light> source : ((IHoldColoredLights) access).getSources()) {
+							if (source == null)
+								continue;
+							loopLight:
+							for (Light light : source) {
+								Collection<LightNode> blockSources = getSources(light.position());
+								if (blockSources != null) {
+									for (LightNode node : blockSources) {
+										if (node.light().equals(light)) {
+											regularUpdates.addFresh(node);
+											continue loopLight;
+										}
+									}
+								}
+								
+								addLight(light);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	public void runUpdate() {
 //		Collection<LightNode> freshNodes = this.freshNodes;
 //		Set<LightNode> newNodes = this.newNodes;
@@ -287,12 +336,14 @@ public class LightManager {
 			int maxPerSource = 3000; // TODO: find a more exact calculation
 			int expOut = maxPerSource * 8;
 			int maxUpdates = expOut;
-			
-			Set<LightNode> finishedNodes = new ObjectOpenCustomHashSet<>(600, FastUtil.nodeStrategy);
+
+//			Set<LightNode> finishedNodes = new ObjectOpenCustomHashSet<>(600, FastUtil.nodeStrategy);
+			Set<LightNode> finishedNodes = new Array2DHashSet<>(FastUtil.nodeEquality);
 			BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
-			
-			Set<LightNode> updatedPositions = new ObjectOpenCustomHashSet<>(600, FastUtil.nodeStrategy);
-			Set<LightBlock> updatedBlocks = new HashSet<>(600);
+
+//			Collection<LightNode> updatedPositions = new ObjectOpenCustomHashSet<>(600, FastUtil.nodeStrategy);
+			Collection<LightNode> updatedPositions = new ArrayList<>();
+			Collection<LightBlock> updatedBlocks = new Array2DHashSet<>();
 			int maxForPrior = maxUpdates;
 			if (regularUpdates.hasAny()) maxForPrior /= 1.5;
 			
@@ -338,6 +389,7 @@ public class LightManager {
 			if (!regularUpdates.hasAny() && !regularUpdates.hasAny())
 				Thread.sleep(1);
 		} catch (Throwable ignored) {
+			ignored.printStackTrace();
 		}
 	}
 	
@@ -370,6 +422,7 @@ public class LightManager {
 		playerPos = Minecraft.getInstance().cameraEntity.chunkPosition();
 		
 		handleLightAddition();
+		checkPlayerMotion();
 		
 		runUpdate();
 		
@@ -394,8 +447,12 @@ public class LightManager {
 	}
 	
 	protected int dimmingAmount(BlockPos actualPos, BlockPos relativePos, LightChunk chunk, Direction direction) {
-		BlockState state = chunk.access.get().getBlockState(relativePos);
-		int block = state.getLightBlock(level.get(), actualPos);
+		ChunkAccess access = chunk.access.get();
+		if (access == null) return 15;
+		BlockState state = access.getBlockState(relativePos);
+		Level level = this.level.get();
+		if (level == null) return 15; // don't think this should be an issue, but might as well
+		int block = state.getLightBlock(level, actualPos);
 		
 		return block + 1;
 	}
@@ -550,19 +607,23 @@ public class LightManager {
 					ChunkAccess access1 = lightChunk.access.get();
 					if (access1 == null) continue;
 					if (section < access1.getMinSection() || section > access1.getMaxSection()) continue;
-					int sectionLook = access1.getSectionIndex(section);
+					int sectionLook = access1.getSectionIndexFromSectionY(section);
 					if (access1 instanceof IHoldColoredLights coloredLightHolder) {
-						for (Light light : coloredLightHolder.getSources()[sectionLook]) {
-							int d = light.position().distManhattan(pos);
-							if (d > light.lightValue()) continue;
-							
-							d = light.lightValue() - d;
-							if (d <= 0) continue;
-							
-							Color color = light.getColor((byte) d);
-							out[0] = Math.max(color.r(), out[0]);
-							out[1] = Math.max(color.g(), out[1]);
-							out[2] = Math.max(color.b(), out[2]);
+						// TODO: is there a better way to deal with CMEs?
+						try {
+							for (Light light : coloredLightHolder.getSources()[sectionLook].toArray(new Light[0])) {
+								int d = light.position().distManhattan(pos);
+								if (d > light.lightValue()) continue;
+								
+								d = light.lightValue() - d;
+								if (d <= 0) continue;
+								
+								Color color = light.getColor((byte) d);
+								out[0] = Math.max(color.r(), out[0]);
+								out[1] = Math.max(color.g(), out[1]);
+								out[2] = Math.max(color.b(), out[2]);
+							}
+						} catch (Throwable ignored) {
 						}
 					}
 				}
