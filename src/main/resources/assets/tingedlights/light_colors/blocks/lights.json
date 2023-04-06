@@ -1,47 +1,116 @@
 {
-  "tingedlights:default": {
-    "start": [252, 252, 252],
-    "end": [46, 20, 0, 5.6],
-    "transition_start": 14,
-    "brightness": -1,
-    "distance_fade": false
+  "types": {
+    "default": {
+      "start": [
+        252,
+        252,
+        252
+      ],
+      "end": [
+        46,
+        20,
+        0,
+        5.6
+      ],
+      "transition_start": 14
+    },
+    "lichen": {
+      "color": [
+        173,
+        174,
+        140
+      ]
+    },
+    "cave_vines": {
+      "color": [
+        234,
+        136,
+        51
+      ]
+    },
+    "glowstone": {
+      "color": [
+        250,
+        217,
+        118
+      ]
+    },
+    "fire": {
+      "start": [
+        217,
+        148,
+        24
+      ],
+      "end": [
+        214,
+        141,
+        21
+      ]
+    },
+    "portal": {
+      "color": [
+        128,
+        49,
+        193
+      ]
+    },
+    "white": {
+      "color": [
+        255,
+        255,
+        255
+      ]
+    },
+    "magma": {
+      "color": [
+        212,
+        61,
+        10
+      ]
+    }
   },
-  "minecraft:glow_lichen": {
-    "color": [173, 174, 140],
-    "brightness": -1
-  },
-  "minecraft:cave_vines": {
-    "color": [234, 136, 51],
-    "brightness": -1
-  },
-  "minecraft:cave_vines_plant": {
-    "color": [234, 136, 51],
-    "brightness": -1
-  },
-  "minecraft:glowstone": {
-    "color": [250, 217, 118],
-    "brightness": -1
-  },
-  "minecraft:fire": {
-    "start": [217, 148, 24],
-    "end": [214, 141, 21],
-    "brightness": -1,
-    "transition_start": 9
-  },
-  "minecraft:nether_portal": {
-    "color": [128, 49, 193],
-    "brightness": -1
-  },
-  "minecraft:enchanting_table": {
-    "color": [255, 255, 255],
-    "brightness": -1
-  },
-  "minecraft:magma_block": {
-    "color": [212, 61, 10],
-    "brightness": -1
-  },
-  "minecraft:lava_cauldron": {
-    "color": [202, 61, 10],
-    "brightness": -1
+  "lights": {
+    "tingedlights:default": {
+      "type": "default",
+      "brightness": -1,
+      "distance_fade": false
+    },
+    "minecraft:glow_lichen": {
+      "type": "lichen",
+      "brightness": -1
+    },
+    "minecraft:cave_vines": {
+      "type": "cave_vines",
+      "brightness": -1
+    },
+    "minecraft:cave_vines_plant": {
+      "type": "cave_vines",
+      "brightness": -1
+    },
+    "minecraft:glowstone": {
+      "type": "glowstone",
+      "brightness": -1
+    },
+    "minecraft:fire": {
+      "type": "fire",
+      "brightness": -1,
+      "transition_start": 9
+    },
+    "minecraft:nether_portal": {
+      "type": "portal",
+      "brightness": -1
+    },
+    "minecraft:enchanting_table": {
+      "type": "white",
+      "brightness": -1
+    },
+    "minecraft:magma_block": {
+      "type": "magma",
+      "brightness": -1
+    },
+    "minecraft:lava_cauldron": {
+      "type": "magma",
+      "brightness": -1
+    }
   }
 }

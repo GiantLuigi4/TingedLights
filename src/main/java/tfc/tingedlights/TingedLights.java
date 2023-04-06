@@ -1,6 +1,5 @@
 package tfc.tingedlights;
 
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -75,7 +74,7 @@ public class TingedLights {
 				} catch (Throwable ignored) {
 				}
 				
-				lightLevel.addLight(new Light(colorsOut[0], colorsOut[1], threshold, v, pos, dFade));
+				lightLevel.updateLight(new Light(colorsOut[0], colorsOut[1], threshold, dFade), pos);
 			}
 		} catch (Throwable ignored) {
 		}

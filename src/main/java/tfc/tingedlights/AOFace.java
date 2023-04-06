@@ -9,7 +9,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.LightManager;
-import tfc.tingedlights.data.access.ILightEngine;
 
 import java.util.BitSet;
 
@@ -26,7 +25,7 @@ public class AOFace {
 	
 	public void calculate(Direction pDirection, BlockAndTintGetter pLevel, BlockState pState, BlockPos pPos, BitSet pShapeFlags) {
 //		BlockPos lightProbePos = pShapeFlags.get(0) ? pPos.relative(bakedQuad.getDirection()) : pPos;
-		LightManager manager = ((ILightEngine) pLevel.getLightEngine()).getManager();
+		LightManager manager = (LightManager) pLevel.getLightEngine();
 		colors = new Color[4];
 
 //		BlockPos blockpos = pShapeFlags.get(0) ? pPos.relative(pDirection) : pPos;

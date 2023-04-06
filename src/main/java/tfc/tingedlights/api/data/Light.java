@@ -1,10 +1,8 @@
 package tfc.tingedlights.api.data;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Vec3i;
-import org.jetbrains.annotations.NotNull;
 import tfc.tingedlights.data.Color;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 public final class Light extends AbstractLight {
@@ -19,17 +17,14 @@ public final class Light extends AbstractLight {
 			Color color,
 			Color endColor,
 			int blendThreshold,
-			byte lightValue,
-			BlockPos position,
 			boolean distanceFade
 	) {
-		super(position, lightValue);
 		this.color = color;
 		this.endColor = endColor;
 		this.blendThreshold = blendThreshold;
 		this.distanceFade = distanceFade;
 		
-		colors = new Color[lightValue];
+		colors = new Color[16];
 		for (int i = 0; i < colors.length; i++) {
 			colors[i] = calcColor((byte) i);
 		}
@@ -87,44 +82,19 @@ public final class Light extends AbstractLight {
 		}
 	}
 	
-	public static Light of(Color color, int brightness, Vec3i position) {
-		return new Light(color, color, 15, (byte) brightness, new BlockPos(position.getX(), position.getY(), position.getZ()), true);
-	}
-	
-	public int distanceTo(BlockPos pPos) {
-		float f = (float) Math.abs(position.getX() - pPos.getX());
-		float f1 = (float) Math.abs(position.getY() - pPos.getY());
-		float f2 = (float) Math.abs(position.getZ() - pPos.getZ());
-		return (int) (f + f1 + f2);
-	}
-	
-	@Override
-	public int compareTo(@NotNull AbstractLight o) {
-		if (o instanceof Light l) {
-			int v = Byte.compare(lightValue, l.lightValue);
-			if (v == 0) {
-				v = color.compareTo(l.color);
-				if (v == 0) {
-					v = endColor.compareTo(l.endColor);
-				}
-			}
-			return v;
-		} else {
-			return super.compareTo(o);
-		}
-	}
-	
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Light light = (Light) o;
-		return blendThreshold == light.blendThreshold && lightValue == light.lightValue && distanceFade == light.distanceFade && Objects.equals(color, light.color) && Objects.equals(endColor, light.endColor) && Objects.equals(position, light.position);
+		return blendThreshold == light.blendThreshold && distanceFade == light.distanceFade && Objects.equals(color, light.color) && Objects.equals(endColor, light.endColor) && Arrays.equals(colors, light.colors);
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(color, endColor, blendThreshold, lightValue, position, distanceFade);
+		int result = Objects.hash(color, endColor, blendThreshold, distanceFade);
+		result = 31 * result + Arrays.hashCode(colors);
+		return result;
 	}
 	
 	public Color color() {
@@ -139,14 +109,6 @@ public final class Light extends AbstractLight {
 		return blendThreshold;
 	}
 	
-	public byte lightValue() {
-		return lightValue;
-	}
-	
-	public BlockPos position() {
-		return position;
-	}
-	
 	public boolean distanceFade() {
 		return distanceFade;
 	}
@@ -157,8 +119,6 @@ public final class Light extends AbstractLight {
 				"color=" + color + ", " +
 				"endColor=" + endColor + ", " +
 				"blendThreshold=" + blendThreshold + ", " +
-				"lightValue=" + lightValue + ", " +
-				"position=" + position + ", " +
 				"distanceFade=" + distanceFade + ']';
 	}
 	

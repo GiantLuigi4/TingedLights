@@ -16,7 +16,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.lwjgl.system.MemoryStack;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.LightManager;
-import tfc.tingedlights.data.access.ILightEngine;
 import tfc.tingedlights.itf.VertexBufferConsumerExtensions;
 
 import java.nio.ByteBuffer;
@@ -90,7 +89,7 @@ public class BlockTesselator {
 		} else {
 			BlockPos lightProbePos = posThreadLocal.get();
 			if (lightProbePos == null) lightProbePos = pPos;
-			LightManager manager = ((ILightEngine) pLevel.getLightEngine()).getManager();
+			LightManager manager = (LightManager) pLevel.getLightEngine();
 			Color blockColor = manager.getColor(lightProbePos, true);
 			if (blockColor == null) {
 				extensions.setColorDone(false);

@@ -20,6 +20,10 @@ apply plugin: 'org.parchmentmc.librarian.forgegradle'
 group = 'tfc'
 version = '1.0-SNAPSHOT'
 
+String gameVersion = '1.18.2'
+String forgeVersion = "40.1.69"
+String parchmentVersion = '1.18.1-2022.03.06-1.18.2'
+
 java {
     archivesBaseName = 'TingedLights'
     toolchain.languageVersion = JavaLanguageVersion.of(17)
@@ -37,7 +41,7 @@ minecraft {
     //
     // Use non-default mappings at your own risk. They may not always work.
     // Simply re-run your setup task after changing the mappings to update your workspace.
-    mappings channel: 'parchment', version: '1.18.1-2022.03.06-1.18.2'
+    mappings channel: 'parchment', version: parchmentVersion
 
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
@@ -203,3 +207,29 @@ jar {
 }
 
 jar.finalizedBy('reobfJar')
+
+// I debug stuff a lot, and I mess with ATs a lot
+// everytime I change ATs, I need to reswap the game jar for the recomp jar
+System.out.println("Swap for recomp jar")
+String dir = project.getBuildDir().toString() + "/fg_cache/net/minecraftforge/forge";
+File fl = new File((String) ("/$gameVersion-$forgeVersion" + "_mapped_parchment_$parchmentVersion"))
+if (fl.exists()) {
+    File fl1 = new File((String) (dir + "/$gameVersion-$forgeVersion" + "_mapped_parchment_$parchmentVersion/forge-$gameVersion-$forgeVersion" + "_mapped_parchment_$parchmentVersion" + ".jar"))
+    File fl2 = new File((String) (dir + "/$gameVersion-$forgeVersion" + "_mapped_parchment_$parchmentVersion/forge-$gameVersion-$forgeVersion" + "_mapped_parchment_$parchmentVersion-recomp.jar"))
+    if (fl2.exists()) {
+        if (fl1.length() != fl2.length()) {
+            if (fl1.exists())
+                fl1.delete()
+
+            FileInputStream inputStream = new FileInputStream(fl2)
+            byte[] bytes = inputStream.readAllBytes()
+            fl1.createNewFile()
+            FileOutputStream outputStream = new FileOutputStream(fl1)
+            outputStream.write(bytes)
+            outputStream.flush()
+            outputStream.close()
+            inputStream.close()
+        }
+    }
+}
+System.out.println("Swapped")

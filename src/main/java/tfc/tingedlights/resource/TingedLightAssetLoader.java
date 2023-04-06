@@ -8,7 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import tfc.tingedlights.api.data.Light;
@@ -29,9 +29,10 @@ public class TingedLightAssetLoader extends SimpleJsonResourceReloadListener {
 		mySpecificGsonObjectBecauseMojangWantedMeToHaveOne = p_10768_;
 	}
 	
-	private static TriFunction<BlockState, Level, BlockPos, Light> defaultLightProvider = (pState, pLevel, pPos) -> null;
-	private static TriFunction<BlockState, Level, BlockPos, Boolean> defaultIsSource = (pState, pLevel, pPos) -> false;
-	private static QuadFunction<BlockState, BlockState, Level, BlockPos, Boolean> defaultUpdateChecker = (pState, pOld, pLevel, pPos) -> {
+	private static TriFunction<BlockState, BlockGetter, BlockPos, Light> defaultLightProvider = (pState, pLevel, pPos) -> null;
+	private static TriFunction<BlockState, BlockGetter, BlockPos, Integer> defaultBrightnessProvider = (pState, pLevel, pPos) -> 0;
+	private static TriFunction<BlockState, BlockGetter, BlockPos, Boolean> defaultIsSource = (pState, pLevel, pPos) -> false;
+	private static QuadFunction<BlockState, BlockState, BlockGetter, BlockPos, Boolean> defaultUpdateChecker = (pState, pOld, pLevel, pPos) -> {
 		if (pOld instanceof TingedLightsBlockAttachments yep)
 			yep.providesLight(pOld, pLevel, pPos);
 		return !pState.getBlock().equals(pOld.getBlock());
@@ -45,16 +46,20 @@ public class TingedLightAssetLoader extends SimpleJsonResourceReloadListener {
 		for (ResourceLocation location : pObject.keySet()) {
 			JsonElement element = pObject.get(location);
 			if (element instanceof JsonObject object) {
+				Map<String, Light> cache = parseTypes(object, location.toString());
+				if (cache == null) continue;
+				
+				object = object.getAsJsonObject("lights");
 				for (String s : object.keySet()) {
 					if (s.equals("tingedlights:default")) {
-						theDefaults = parseDefaults(object.getAsJsonObject(s), location.toString(), s);
+						theDefaults = parseDefaults(cache, object.getAsJsonObject(s), location.toString(), s);
 					} else {
 						Block block = Registry.BLOCK.get(new ResourceLocation(s));
 						if (block != null) { // TODO: support tags
 							if (Registry.BLOCK.getKey(block).equals(new ResourceLocation(s))) {
 								JsonElement element1 = object.get(s);
 								if (element1 instanceof JsonObject obj) {
-									Pair<StateIdentifier, LightProvider> provider = parseProvider(obj, location.toString(), s);
+									Pair<StateIdentifier, LightProvider> provider = parseProvider(cache, obj, location.toString(), s);
 									PerStateLightProvider lightProvider = providerHashMap.get(block);
 									if (lightProvider == null)
 										providerHashMap.put(block, lightProvider = new PerStateLightProvider());
@@ -65,7 +70,7 @@ public class TingedLightAssetLoader extends SimpleJsonResourceReloadListener {
 										providerHashMap.put(block, lightProvider = new PerStateLightProvider());
 									for (JsonElement jsonElement : array) {
 										if (jsonElement instanceof JsonObject obj) {
-											Pair<StateIdentifier, LightProvider> provider = parseProvider(obj, location.toString(), s);
+											Pair<StateIdentifier, LightProvider> provider = parseProvider(cache, obj, location.toString(), s);
 											lightProvider.addProvider(provider.getFirst(), provider.getSecond());
 										}
 									}
@@ -76,15 +81,17 @@ public class TingedLightAssetLoader extends SimpleJsonResourceReloadListener {
 				}
 			}
 		}
-		for (PerStateLightProvider value : providerHashMap.values()) {
-			value.sort();
-		}
 		
-		TriFunction<BlockState, Level, BlockPos, Light> defaultLightProvider = TingedLightAssetLoader.defaultLightProvider;
-		TriFunction<BlockState, Level, BlockPos, Boolean> defaultIsSource = TingedLightAssetLoader.defaultIsSource;
-		QuadFunction<BlockState, BlockState, Level, BlockPos, Boolean> defaultUpdateChecker = TingedLightAssetLoader.defaultUpdateChecker;
+		for (PerStateLightProvider value : providerHashMap.values())
+			value.sort();
+		
+		TriFunction<BlockState, BlockGetter, BlockPos, Light> defaultLightProvider = TingedLightAssetLoader.defaultLightProvider;
+		TriFunction<BlockState, BlockGetter, BlockPos, Integer> defaultBrightnessProvider = TingedLightAssetLoader.defaultBrightnessProvider;
+		TriFunction<BlockState, BlockGetter, BlockPos, Boolean> defaultIsSource = TingedLightAssetLoader.defaultIsSource;
+		QuadFunction<BlockState, BlockState, BlockGetter, BlockPos, Boolean> defaultUpdateChecker = TingedLightAssetLoader.defaultUpdateChecker;
 		if (theDefaults != null) {
 			defaultLightProvider = theDefaults::createLight;
+			defaultBrightnessProvider = theDefaults::getBrightness;
 			defaultIsSource = theDefaults::providesLight;
 			defaultUpdateChecker = theDefaults::needsUpdate;
 		}
@@ -97,20 +104,28 @@ public class TingedLightAssetLoader extends SimpleJsonResourceReloadListener {
 					LightProvider provider = providerHashMap.get(block);
 					if (provider instanceof PerStateLightProvider perState)
 						provider = perState.maybeBake();
-					attachments.setFunctions(provider::createLight, provider::providesLight, provider::needsUpdate);
-				} else {
-					attachments.setFunctions(defaultLightProvider, defaultIsSource, defaultUpdateChecker);
-				}
+					attachments.setFunctions(provider::createLight, provider::getBrightness, provider::providesLight, provider::needsUpdate);
+				} else
+					attachments.setFunctions(defaultLightProvider, defaultBrightnessProvider, defaultIsSource, defaultUpdateChecker);
 			}
 		}
 	}
 	
-	private LightProvider parseDefaults(JsonObject asJsonObject, String file, String element) {
-		// I may or may not end up having features exclusive to the defaults
-		return parseProvider(asJsonObject, file, element).getSecond();
+	public Map<String, Light> parseTypes(JsonObject object, String file) {
+		try {
+			object = object.getAsJsonObject("types");
+			HashMap<String, Light> cache = new HashMap<>();
+			for (String s : object.keySet())
+				cache.put(s, parseLightType(object.getAsJsonObject(s), file, "types/" + s));
+			return cache;
+		} catch (Throwable err) {
+			System.out.println("Failed to parse light types in " + file);
+			err.printStackTrace();
+			return null;
+		}
 	}
 	
-	private Pair<StateIdentifier, LightProvider> parseProvider(JsonObject asJsonObject, String file, String element) {
+	public Light parseLightType(JsonObject asJsonObject, String file, String element) {
 		Color startColor = null;
 		Color endColor = null;
 		if (asJsonObject.has("start")) {
@@ -148,11 +163,21 @@ public class TingedLightAssetLoader extends SimpleJsonResourceReloadListener {
 		}
 		
 		int transition = getIntOrDefault(asJsonObject, "transition_start", 15, file, element);
-		int brightness = getIntOrDefault(asJsonObject, "brightness", 15, file, element);
 		boolean distanceFade = getBoolOrDefault(asJsonObject, "distance_fade", true, file, element);
 		
-		final Color finalStart = startColor;
-		final Color finalEnd = endColor;
+		return new Light(startColor, endColor, transition, distanceFade);
+	}
+	
+	private LightProvider parseDefaults(Map<String, Light> lights, JsonObject asJsonObject, String file, String element) {
+		// I may or may not end up having features exclusive to the defaults
+		return parseProvider(lights, asJsonObject, file, element).getSecond();
+	}
+	
+	private Pair<StateIdentifier, LightProvider> parseProvider(Map<String, Light> lights, JsonObject asJsonObject, String file, String element) {
+		String type = asJsonObject.getAsJsonPrimitive("type").getAsString();
+		Light light = lights.get(type);
+		
+		int brightness = getIntOrDefault(asJsonObject, "brightness", 15, file, element);
 		
 		Block block = Registry.BLOCK.get(new ResourceLocation(element));
 		Map<String, String> state = new HashMap<>();
@@ -167,28 +192,37 @@ public class TingedLightAssetLoader extends SimpleJsonResourceReloadListener {
 		if (brightness == -1) {
 			return Pair.of(identifier, new LightProvider() {
 				@Override
-				public Light createLight(BlockState pState, Level pLevel, BlockPos pPos) {
+				public Light createLight(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
 					int emit = pState.getLightEmission(pLevel, pPos);
 					if (emit == 0) return null;
-					return new Light(finalStart, finalEnd, transition, (byte) emit, pPos, distanceFade);
+					return light;
 				}
 				
 				@Override
-				public boolean providesLight(BlockState pState, Level pLevel, BlockPos pPos) {
+				public int getBrightness(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
+					return pState.getLightEmission(pLevel, pPos);
+				}
+				
+				@Override
+				public boolean providesLight(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
 					int emit = pState.getLightEmission(pLevel, pPos);
-					if (emit == 0) return false;
-					return true;
+					return emit != 0;
 				}
 			});
 		} else {
 			return Pair.of(identifier, new LightProvider() {
 				@Override
-				public Light createLight(BlockState pState, Level pLevel, BlockPos pPos) {
-					return new Light(finalStart, finalEnd, transition, (byte) brightness, pPos, distanceFade);
+				public Light createLight(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
+					return light;
 				}
 				
 				@Override
-				public boolean providesLight(BlockState pState, Level pLevel, BlockPos pPos) {
+				public int getBrightness(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
+					return brightness;
+				}
+				
+				@Override
+				public boolean providesLight(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
 					return true;
 				}
 			});

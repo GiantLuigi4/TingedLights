@@ -1,32 +1,39 @@
 {
-  "minecraft:soul_torch": {
-    "start": [252, 252, 252],
-    "end": [121, 249, 253],
-    "transition_start": 7,
-    "brightness": -1
+  "types": {
+    "soul": {
+      "start": [
+        252,
+        252,
+        252
+      ],
+      "end": [
+        121,
+        249,
+        253
+      ],
+      "transition_start": 7
+    }
   },
-  "minecraft:soul_wall_torch": {
-    "start": [252, 252, 252],
-    "end": [121, 249, 253],
-    "transition_start": 7,
-    "brightness": -1
-  },
-  "minecraft:soul_lantern": {
-    "start": [252, 252, 252],
-    "end": [121, 249, 253],
-    "transition_start": 7,
-    "brightness": -1
-  },
-  "minecraft:soul_campfire": {
-    "start": [252, 252, 252],
-    "end": [121, 249, 253],
-    "transition_start": 7,
-    "brightness": -1
-  },
-  "minecraft:soul_fire": {
-    "start": [252, 252, 252],
-    "end": [121, 249, 253],
-    "transition_start": 7,
-    "brightness": -1
+  "lights": {
+    "minecraft:soul_torch": {
+      "type": "soul",
+      "brightness": -1
+    },
+    "minecraft:soul_wall_torch": {
+      "type": "soul",
+      "brightness": -1
+    },
+    "minecraft:soul_lantern": {
+      "type": "soul",
+      "brightness": -1
+    },
+    "minecraft:soul_campfire": {
+      "type": "soul",
+      "brightness": -1
+    },
+    "minecraft:soul_fire": {
+      "type": "soul",
+      "brightness": -1
+    }
   }
 }

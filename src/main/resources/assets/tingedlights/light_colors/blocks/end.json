@@ -1,26 +1,44 @@
 {
-  "minecraft:end_gateway": {
-    "color": [255, 255, 255],
-    "brightness": -1
+  "types": {
+    "white": {
+      "color": [
+        255,
+        255,
+        255
+      ]
+    },
+    "dimish": {
+      "color": [
+        249,
+        245,
+        252
+      ]
+    }
   },
-  "minecraft:end_rod": {
-    "color": [255, 255, 255],
-    "brightness": -1
-  },
-  "minecraft:end_portal": {
-    "color": [255, 255, 255],
-    "brightness": -1
-  },
-  "minecraft:ender_chest": {
-    "color": [249, 245, 252],
-    "brightness": -1
-  },
-  "minecraft:end_portal_frame": {
-    "color": [255, 255, 255],
-    "brightness": -1
-  },
-  "minecraft:dragon_egg": {
-    "color": [255, 255, 255],
-    "brightness": -1
+  "lights": {
+    "minecraft:end_gateway": {
+      "type": "white",
+      "brightness": -1
+    },
+    "minecraft:end_rod": {
+      "type": "white",
+      "brightness": -1
+    },
+    "minecraft:end_portal": {
+      "type": "white",
+      "brightness": -1
+    },
+    "minecraft:ender_chest": {
+      "type": "dimish",
+      "brightness": -1
+    },
+    "minecraft:end_portal_frame": {
+      "type": "white",
+      "brightness": -1
+    },
+    "minecraft:dragon_egg": {
+      "type": "white",
+      "brightness": -1
+    }
   }
 }

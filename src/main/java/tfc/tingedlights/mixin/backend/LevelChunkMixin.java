@@ -28,7 +28,9 @@ import tfc.tingedlights.data.access.IHoldColoredLights;
 import tfc.tingedlights.data.access.ILightEngine;
 import tfc.tingedlights.data.access.TingedLightsBlockAttachments;
 import tfc.tingedlights.util.ChunkLoadState;
+import tfc.tingedlights.util.OnThread;
 import tfc.tingedlights.util.Threading;
+import tfc.tingedlights.utils.LightInfo;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -38,7 +40,7 @@ import java.util.stream.Stream;
 @Mixin(LevelChunk.class)
 public abstract class LevelChunkMixin implements IHoldColoredLights {
 	@Unique
-	Collection<Light>[] sources;
+	Collection<LightInfo>[] sources;
 	
 	@Inject(at = @At("TAIL"), method = "<init>(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/ChunkPos;Lnet/minecraft/world/level/chunk/UpgradeData;Lnet/minecraft/world/ticks/LevelChunkTicks;Lnet/minecraft/world/ticks/LevelChunkTicks;J[Lnet/minecraft/world/level/chunk/LevelChunkSection;Lnet/minecraft/world/level/chunk/LevelChunk$PostLoadProcessor;Lnet/minecraft/world/level/levelgen/blending/BlendingData;)V")
 	public void postInit(Level pLevel, ChunkPos pPos, UpgradeData pData, LevelChunkTicks pBlockTicks, LevelChunkTicks pFluidTIcks, long pInhabitedTime, LevelChunkSection[] pSections, LevelChunk.PostLoadProcessor pPostLoad, BlendingData p_196862_, CallbackInfo ci) {
@@ -52,7 +54,7 @@ public abstract class LevelChunkMixin implements IHoldColoredLights {
 	}
 	
 	@Override
-	public Collection<Light>[] getSources() {
+	public Collection<LightInfo>[] getSources() {
 		return sources;
 	}
 	
@@ -65,13 +67,20 @@ public abstract class LevelChunkMixin implements IHoldColoredLights {
 	@Shadow
 	@Final
 	private Level level;
+	
+	@Shadow
+	public abstract Level getLevel();
+	
 	@Unique
 	boolean wasLoaded = false;
 	
 	@Unique
-	private static void fill(LevelChunk chunk, Collection<Light>[] sources) {
+	private static void fill(LevelChunk chunk, Collection<LightInfo>[] sources) {
 		LevelChunk lvlChunk = (LevelChunk) (Object) chunk;
-		Collection<Light>[] newSources = new Collection[sources.length];
+		Collection<LightInfo>[] newSources = new Collection[sources.length];
+		
+		LightManager manager = ((ILightEngine) lvlChunk.getLevel().getLightEngine()).getManager();
+		
 		for (LevelChunkSection section : lvlChunk.getSections()) {
 			int sectionY = (int) SectionPos.blockToSection(section.bottomBlockY());
 			sectionY = lvlChunk.getSectionIndexFromSectionY(sectionY);
@@ -80,8 +89,6 @@ public abstract class LevelChunkMixin implements IHoldColoredLights {
 			if (section.hasOnlyAir()) continue;
 			
 			BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
-			
-			LightManager manager = ((ILightEngine) lvlChunk.getLevel().getLightEngine()).getManager();
 			
 			for (int x = 0; x < 16; x++) {
 				for (int y = 0; y < 16; y++) {
@@ -102,9 +109,10 @@ public abstract class LevelChunkMixin implements IHoldColoredLights {
 										z + lvlChunk.getPos().getMinBlockZ()
 								);
 								
-								Light light = attachments.createLight(state, lvlChunk.getLevel(), blockPos.immutable());
+								BlockPos immut = blockPos.immutable();
+								Light light = attachments.createLight(state, lvlChunk.getLevel(), immut);
 								if (light != null) {
-									newSources[sectionY].add(light);
+									newSources[sectionY].add(new LightInfo(light, immut, (byte) attachments.getBrightness(state, lvlChunk.getLevel(), immut)));
 								}
 							}
 						}
@@ -113,10 +121,17 @@ public abstract class LevelChunkMixin implements IHoldColoredLights {
 			}
 			
 			sources[sectionY] = newSources[sectionY];
-			for (Light light : sources[sectionY]) {
-				manager.addLight(light);
-			}
 		}
+		
+		OnThread.runOnMainThread(
+				() -> {
+					for (Collection<LightInfo> newSource : sources) {
+						for (LightInfo light : newSource) {
+							manager.updateLight(light.light(), light.pos());
+						}
+					}
+				}
+		);
 	}
 	
 	@Inject(at = @At("TAIL"), method = "replaceWithPacketData")
@@ -128,9 +143,7 @@ public abstract class LevelChunkMixin implements IHoldColoredLights {
 				wasLoaded = true;
 				ChunkLoadState.firstBatch = false;
 			} else {
-				Threading.chunkLightLoader.addAction(() -> {
-					fill((LevelChunk) (Object) this, this.sources);
-				});
+				Threading.chunkLightLoader.addAction(() -> fill((LevelChunk) (Object) this, this.sources));
 			}
 		} catch (Throwable err) {
 			err.printStackTrace();

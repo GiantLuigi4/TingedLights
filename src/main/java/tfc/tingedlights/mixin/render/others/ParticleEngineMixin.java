@@ -21,7 +21,6 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import tfc.tingedlights.LightBlender;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.LightManager;
-import tfc.tingedlights.data.access.ILightEngine;
 import tfc.tingedlights.itf.VertexBufferConsumerExtensions;
 
 import java.util.Iterator;
@@ -33,7 +32,7 @@ public class ParticleEngineMixin {
 	
 	@Inject(at = @At(shift = At.Shift.BEFORE, value = "INVOKE", target = "Lnet/minecraft/client/particle/Particle;render(Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/client/Camera;F)V"), method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/LightTexture;Lnet/minecraft/client/Camera;FLnet/minecraft/client/renderer/culling/Frustum;)V", locals = LocalCapture.CAPTURE_FAILSOFT)
 	public void preDrawParticle(PoseStack pMatrixStack, MultiBufferSource.BufferSource pBuffer, LightTexture pLightTexture, Camera pActiveRenderInfo, float pPartialTicks, Frustum clippingHelper, CallbackInfo ci, PoseStack posestack, Iterator var8, ParticleRenderType particlerendertype, Iterable iterable, Tesselator tesselator, BufferBuilder bufferbuilder, Iterator var13, Particle particle) {
-		LightManager manager = ((ILightEngine) level.getLightEngine()).getManager();
+		LightManager manager = ((LightManager) level);
 		Color c = LightBlender.blend(
 				new Vec3(particle.x, particle.y, particle.z),
 				manager, level

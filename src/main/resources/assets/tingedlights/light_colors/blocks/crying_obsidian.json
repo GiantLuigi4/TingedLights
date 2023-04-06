@@ -1,43 +1,75 @@
 {
-  "minecraft:crying_obsidian": {
-    "color": [96, 12, 169],
-    "brightness": -1
-  },
-  "minecraft:respawn_anchor": [
-    {
-      "color": [96.0, 12.0, 169.0],
-      "brightness": 2,
-      "state": {
-        "charges": 0
-      }
+  "types": {
+    "crying": {
+      "color": [
+        96,
+        12,
+        169
+      ]
     },
-    {
-      "color": [96.0, 12.0, 169.0],
-      "brightness": -1,
-      "state": {
-        "charges": 1
-      }
+    "s2": {
+      "color": [
+        134.5,
+        63.25,
+        156.25
+      ]
     },
-    {
-      "color": [134.5, 63.25, 156.25],
-      "brightness": -1,
-      "state": {
-        "charges": 2
-      }
+    "s3": {
+      "color": [
+        173.0,
+        114.5,
+        143.5
+      ]
     },
-    {
-      "color": [173.0, 114.5, 143.5],
-      "brightness": -1,
-      "state": {
-        "charges": 3
-      }
-    },
-    {
-      "color": [211.5, 165.75, 130.75],
-      "brightness": -1,
-      "state": {
-        "charges": 4
-      }
+    "s4": {
+      "color": [
+        211.5,
+        165.75,
+        130.75
+      ]
     }
-  ]
+  },
+  "lights": {
+    "minecraft:crying_obsidian": {
+      "type": "crying",
+      "brightness": -1
+    },
+    "minecraft:respawn_anchor": [
+      {
+        "type": "crying",
+        "brightness": 2,
+        "state": {
+          "charges": 0
+        }
+      },
+      {
+        "type": "crying",
+        "brightness": -1,
+        "state": {
+          "charges": 1
+        }
+      },
+      {
+        "type": "s2",
+        "brightness": -1,
+        "state": {
+          "charges": 2
+        }
+      },
+      {
+        "type": "s3",
+        "brightness": -1,
+        "state": {
+          "charges": 3
+        }
+      },
+      {
+        "type": "s4",
+        "brightness": -1,
+        "state": {
+          "charges": 4
+        }
+      }
+    ]
+  }
 }

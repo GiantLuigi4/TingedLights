@@ -1,20 +1,25 @@
 package tfc.tingedlights.data.access;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import tfc.tingedlights.api.data.Light;
 import tfc.tingedlights.api.interfaces.QuadFunction;
 import tfc.tingedlights.api.interfaces.TriFunction;
 
 public interface TingedLightsBlockAttachments {
-	Light createLight(BlockState pState, Level pLevel, BlockPos pPos);
-	boolean providesLight(BlockState pState, Level level, BlockPos pos);
-	boolean needsUpdate(BlockState pState, BlockState pOld, Level pLevel, BlockPos pPos);
+	Light createLight(BlockState pState, BlockGetter pLevel, BlockPos pPos);
+	
+	int getBrightness(BlockState pState, BlockGetter level, BlockPos pPos);
+	
+	boolean providesLight(BlockState pState, BlockGetter level, BlockPos pos);
+	
+	boolean needsUpdate(BlockState pState, BlockState pOld, BlockGetter pLevel, BlockPos pPos);
 	
 	void setFunctions(
-			TriFunction<BlockState, Level, BlockPos, Light> lightCreation,
-			TriFunction<BlockState, Level, BlockPos, Boolean> lightChecker,
-			QuadFunction<BlockState, BlockState, Level, BlockPos, Boolean> updateChecker
+			TriFunction<BlockState, BlockGetter, BlockPos, Light> lightCreation,
+			TriFunction<BlockState, BlockGetter, BlockPos, Integer> brightnessGetter,
+			TriFunction<BlockState, BlockGetter, BlockPos, Boolean> lightChecker,
+			QuadFunction<BlockState, BlockState, BlockGetter, BlockPos, Boolean> updateChecker
 	);
 }

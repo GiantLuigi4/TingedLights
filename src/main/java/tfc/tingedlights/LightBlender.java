@@ -6,11 +6,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.LightManager;
-import tfc.tingedlights.data.struct.LightNode;
+import tfc.tingedlights.utils.LightInfo;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 public class LightBlender {
 	/*protected static final float divisor = 9;
@@ -18,7 +16,7 @@ public class LightBlender {
 	
 	private static final Color defaultColor = new Color(0, 0, 0);
 	
-	public static Color blendLight(Collection<LightNode> nodes) {
+	public static Color blendLight(Collection<LightInfo> nodes) {
 		if (nodes == null)
 			return defaultColor;
 		return blend(flatten(nodes));
@@ -30,10 +28,12 @@ public class LightBlender {
 		float bOut = 0;
 		int count = colors.length;
 		for (Color color : colors) {
+			if (color == null) continue;
+			
 			// TODO: do this better?
-			float lr = color.r() + rOut / (count * 15f);
-			float lg = color.g() + gOut / (count * 15f);
-			float lb = color.b() + bOut / (count * 15f);
+			float lr = color.r() + rOut;
+			float lg = color.g() + gOut;
+			float lb = color.b() + bOut;
 			
 			rOut = Math.max(rOut, lr);
 			gOut = Math.max(gOut, lg);
@@ -46,12 +46,12 @@ public class LightBlender {
 		return new Color(rOut, gOut, bOut);
 	}
 	
-	public static Color[] flatten(Collection<LightNode> nodes) {
+	public static Color[] flatten(Collection<LightInfo> nodes) {
 //		Collection<Color> colorsSet = new HashSet<>(nodes.size());
 		int sz = nodes.size();
 		Color[] colorsOut = new Color[sz];
 		int index = 0;
-		for (LightNode node : nodes) {
+		for (LightInfo node : nodes) {
 			Color blended = node.light().getColor(node.brightness());
 			colorsOut[index] = blended;
 			index++;

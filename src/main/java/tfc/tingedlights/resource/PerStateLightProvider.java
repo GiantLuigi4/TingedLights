@@ -3,8 +3,7 @@ package tfc.tingedlights.resource;
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import tfc.tingedlights.api.data.Light;
 import tfc.tingedlights.api.data.LightProvider;
@@ -24,7 +23,7 @@ public class PerStateLightProvider extends LightProvider {
 	}
 	
 	@Override
-	public Light createLight(BlockState pState, Level pLevel, BlockPos pPos) {
+	public Light createLight(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
 		for (Pair<StateIdentifier, LightProvider> stateIdentifierLightProviderPair : internal) {
 			if (stateIdentifierLightProviderPair.getFirst().validate(pState)) {
 				return stateIdentifierLightProviderPair.getSecond().createLight(pState, pLevel, pPos);
@@ -34,7 +33,17 @@ public class PerStateLightProvider extends LightProvider {
 	}
 	
 	@Override
-	public boolean providesLight(BlockState pState, Level pLevel, BlockPos pPos) {
+	public int getBrightness(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
+		for (Pair<StateIdentifier, LightProvider> stateIdentifierLightProviderPair : internal) {
+			if (stateIdentifierLightProviderPair.getFirst().validate(pState)) {
+				return stateIdentifierLightProviderPair.getSecond().getBrightness(pState, pLevel, pPos);
+			}
+		}
+		return 0;
+	}
+	
+	@Override
+	public boolean providesLight(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
 		for (Pair<StateIdentifier, LightProvider> stateIdentifierLightProviderPair : internal) {
 			if (stateIdentifierLightProviderPair.getFirst().validate(pState)) {
 				return stateIdentifierLightProviderPair.getSecond().providesLight(pState, pLevel, pPos);
@@ -44,7 +53,7 @@ public class PerStateLightProvider extends LightProvider {
 	}
 	
 	@Override
-	public boolean needsUpdate(BlockState pState, BlockState pOld, Level pLevel, BlockPos pPos) {
+	public boolean needsUpdate(BlockState pState, BlockState pOld, BlockGetter pLevel, BlockPos pPos) {
 		LightProvider provider = getFor(pState);
 		if (provider == null) return super.needsUpdate(pState, pOld, pLevel, pPos);
 		if (provider.needsUpdate(pState, pOld, pLevel, pPos)) return true;

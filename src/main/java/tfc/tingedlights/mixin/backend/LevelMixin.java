@@ -22,6 +22,7 @@ import tfc.tingedlights.data.access.IHoldColoredLights;
 import tfc.tingedlights.data.access.LevelWithColoredLightSupport;
 import tfc.tingedlights.data.access.TingedLightsBlockAttachments;
 import tfc.tingedlights.util.ChunkLoadState;
+import tfc.tingedlights.utils.LightInfo;
 
 import java.util.function.Supplier;
 
@@ -35,16 +36,25 @@ public abstract class LevelMixin {
 		}
 	}
 	
+	private static final ThreadLocal<BlockState> stateThreadLocal = new ThreadLocal<>();
+	
 	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/chunk/LevelChunk;setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Z)Lnet/minecraft/world/level/block/state/BlockState;"), method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z", locals = LocalCapture.CAPTURE_FAILHARD)
 	public void preSetBlockState(BlockPos pPos, BlockState pState, int pFlags, int pRecursionLeft, CallbackInfoReturnable<Boolean> cir, LevelChunk levelchunk, Block block, BlockSnapshot blockSnapshot, BlockState old, int oldLight, int oldOpacity) {
+		if (this instanceof LevelWithColoredLightSupport) {
+			stateThreadLocal.set(levelchunk.getBlockState(pPos));
+		}
+	}
+	
+	@Inject(at = @At(shift = At.Shift.AFTER, value = "INVOKE", target = "Lnet/minecraft/world/level/chunk/LevelChunk;setBlockState(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Z)Lnet/minecraft/world/level/block/state/BlockState;"), method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z", locals = LocalCapture.CAPTURE_FAILHARD)
+	public void postSetBlockState(BlockPos pPos, BlockState pState, int pFlags, int pRecursionLeft, CallbackInfoReturnable<Boolean> cir, LevelChunk levelchunk, Block block, BlockSnapshot blockSnapshot, BlockState old, int oldLight, int oldOpacity) {
 		// TODO: deal with fluids
 		if (this instanceof LevelWithColoredLightSupport lightSupport) {
-			BlockState state = levelchunk.getBlockState(pPos);
+			BlockState state = stateThreadLocal.get();
 			if (state.getBlock() instanceof TingedLightsBlockAttachments attachments) {
 				Light light = attachments.createLight(state, (Level) (Object) this, pPos);
 				if (light != null) {
 					if (attachments.needsUpdate(pState, old, (Level) (Object) this, pPos)) {
-						lightSupport.removeLight(light);
+						lightSupport.updateLight(light, pPos);
 					}
 				}
 			}
@@ -75,11 +85,11 @@ public abstract class LevelMixin {
 					if (pState.getBlock() instanceof TingedLightsBlockAttachments potentialLightSource) {
 						Light light = potentialLightSource.createLight(pState, level, pPos);
 						if (light != null) {
-							lightSupport.addLight(light);
+							lightSupport.updateLight(light, pPos);
 							if (levelchunk instanceof IHoldColoredLights iHoldColoredLights) {
-								int sectionY = (int) SectionPos.blockToSection(light.position().getY());
+								int sectionY = (int) SectionPos.blockToSection(pPos.getY());
 								sectionY = levelchunk.getSectionIndexFromSectionY(sectionY);
-								iHoldColoredLights.getSources()[sectionY].add(light);
+								iHoldColoredLights.getSources()[sectionY].add(new LightInfo(light, pPos, (byte) potentialLightSource.getBrightness(pState, level, pPos)));
 							}
 						} else if (needsRecompute) // TODO: may update light method?
 							lightSupport.updateNeighbors(pPos);

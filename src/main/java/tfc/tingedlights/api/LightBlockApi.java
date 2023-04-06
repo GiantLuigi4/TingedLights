@@ -9,6 +9,7 @@ public class LightBlockApi {
 		if (block instanceof TingedLightsBlockAttachments attachments) {
 			attachments.setFunctions(
 					provider::createLight,
+					provider::getBrightness,
 					provider::providesLight,
 					provider::needsUpdate
 			);

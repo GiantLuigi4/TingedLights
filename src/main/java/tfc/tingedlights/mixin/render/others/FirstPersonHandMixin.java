@@ -7,7 +7,6 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderBuffers;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Final;
@@ -19,7 +18,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tfc.tingedlights.LightBlender;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.LightManager;
-import tfc.tingedlights.data.access.ILightEngine;
 import tfc.tingedlights.itf.VertexBufferConsumerExtensions;
 
 @Mixin(GameRenderer.class)
@@ -42,7 +40,7 @@ public class FirstPersonHandMixin {
 		if (pBuffer instanceof VertexBufferConsumerExtensions extensions) {
 			Entity pEntity = this.minecraft.player;
 			Vec3 pos = pEntity.getLightProbePosition(pPartialTicks);
-			LightManager engine = ((ILightEngine) pEntity.getLevel().getLightEngine()).getManager();
+			LightManager engine = ((LightManager) pEntity.getLevel());
 			Color color = LightBlender.blend(pos, engine, pEntity.getLevel());
 			extensions.setColorDone(false);
 			extensions.setDefault(color);

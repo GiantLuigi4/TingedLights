@@ -1,18 +1,29 @@
 {
-  "minecraft:small_amethyst_bud": {
-    "color": [207, 160, 241],
-    "brightness": -1
+  "types": {
+    "amethyst": {
+      "color": [
+        207,
+        160,
+        241
+      ]
+    }
   },
-  "minecraft:medium_amethyst_bud": {
-    "color": [207, 160, 241],
-    "brightness": -1
-  },
-  "minecraft:large_amethyst_bud": {
-    "color": [207, 160, 241],
-    "brightness": -1
-  },
-  "minecraft:amethyst_cluster": {
-    "color": [207, 160, 241],
-    "brightness": -1
+  "lights": {
+    "minecraft:small_amethyst_bud": {
+      "type": "amethyst",
+      "brightness": -1
+    },
+    "minecraft:medium_amethyst_bud": {
+      "type": "amethyst",
+      "brightness": -1
+    },
+    "minecraft:large_amethyst_bud": {
+      "type": "amethyst",
+      "brightness": -1
+    },
+    "minecraft:amethyst_cluster": {
+      "type": "amethyst",
+      "brightness": -1
+    }
   }
 }
