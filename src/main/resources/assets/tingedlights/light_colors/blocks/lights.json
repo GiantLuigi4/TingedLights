@@ -1,79 +1,41 @@
 {
   "types": {
     "default": {
-      "start": [
-        252,
-        252,
-        252
-      ],
-      "end": [
-        46,
-        20,
-        0,
-        5.6
-      ],
-      "transition_start": 14
+      "start": [230, 202, 157],
+      "end": [156, 127, 88],
+      "transition_start": 14,
+      "distance_fade": true
     },
     "lichen": {
-      "color": [
-        173,
-        174,
-        140
-      ]
+      "color": [173, 174, 140]
     },
     "cave_vines": {
-      "color": [
-        234,
-        136,
-        51
-      ]
+      "color": [234, 136, 51]
     },
     "glowstone": {
-      "color": [
-        250,
-        217,
-        118
-      ]
+      "color": [250, 217, 118]
     },
     "fire": {
-      "start": [
-        217,
-        148,
-        24
-      ],
-      "end": [
-        214,
-        141,
-        21
-      ]
+      "start": [234, 163, 91],
+      "end": [234, 192, 67]
     },
     "portal": {
-      "color": [
-        128,
-        49,
-        193
-      ]
+      "color": [128, 49, 193]
     },
     "white": {
-      "color": [
-        255,
-        255,
-        255
-      ]
+      "color": [255, 255, 255]
     },
     "magma": {
-      "color": [
-        212,
-        61,
-        10
-      ]
+      "color": [212, 61, 10]
+    },
+    "shroomlight": {
+      "color": [253, 171, 110]
     }
   },
   "lights": {
     "tingedlights:default": {
       "type": "default",
-      "brightness": -1,
-      "distance_fade": false
+      "brightness": -1
     },
     "minecraft:glow_lichen": {
       "type": "lichen",
@@ -110,6 +72,10 @@
     },
     "minecraft:lava_cauldron": {
       "type": "magma",
+      "brightness": -1
+    },
+    "minecraft:shroomlight": {
+      "type": "shroomlight",
       "brightness": -1
     }
   }

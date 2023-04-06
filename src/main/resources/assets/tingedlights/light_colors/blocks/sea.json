@@ -1,0 +1,13 @@
+{
+  "types": {
+    "lantern": {
+      "color": [225, 234, 229]
+    }
+  },
+  "lights": {
+    "minecraft:sea_lantern": {
+      "type": "lantern",
+      "brightness": -1
+    }
+  }
+}

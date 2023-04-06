@@ -22,9 +22,12 @@ import tfc.tingedlights.LightBlender;
 import tfc.tingedlights.api.data.Light;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.access.ColoredLightEngine;
+import tfc.tingedlights.data.access.IHoldColoredLights;
 import tfc.tingedlights.util.ColoredBlockLightingEngine;
+import tfc.tingedlights.utils.LightInfo;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -105,16 +108,16 @@ public class LevelLightEngineMixin implements ColoredLightEngine {
 	}
 	
 	protected void addChunk(Light key, ChunkPos pos, BlockLightEngine engine) {
-//		BlockGetter chunk = lightChunkGetter.getChunkForLighting(pos.x, pos.z);
-//		if (chunk instanceof IHoldColoredLights colorLightHolder) {
-//			for (Collection<LightInfo> source : colorLightHolder.getSources()) {
-//				for (LightInfo lightInfo : source) {
-//					if (lightInfo.light().equals(key)) {
-//						engine.checkBlock(lightInfo.pos());
-//					}
-//				}
-//			}
-//		}
+		BlockGetter chunk = lightChunkGetter.getChunkForLighting(pos.x, pos.z);
+		if (chunk instanceof IHoldColoredLights colorLightHolder) {
+			for (Collection<LightInfo> source : colorLightHolder.getSources()) {
+				for (LightInfo lightInfo : source) {
+					if (lightInfo.light().equals(key)) {
+						engine.checkBlock(lightInfo.pos());
+					}
+				}
+			}
+		}
 	}
 	
 	protected BlockLightEngine getEngine(Light key) {

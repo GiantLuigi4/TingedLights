@@ -1,11 +1,7 @@
 {
   "types": {
     "redstone": {
-      "color": [
-        255,
-        25,
-        0
-      ]
+      "color": [255, 25, 0]
     }
   },
   "lights": {

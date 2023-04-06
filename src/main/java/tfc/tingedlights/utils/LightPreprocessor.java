@@ -12,10 +12,14 @@ import java.util.List;
 
 public class LightPreprocessor extends GlslPreprocessor {
 	GlslPreprocessor actualProcessor;
+	ParticlePreprocessor particlePreprocessor = null;
 	String name;
 	Program.Type type;
 	
 	public LightPreprocessor(GlslPreprocessor actualProcessor, String name, Program.Type type) {
+		if (name.equals("particle")) {
+			particlePreprocessor = new ParticlePreprocessor(type);
+		}
 		this.actualProcessor = actualProcessor;
 		this.name = name;
 		this.type = type;
@@ -33,6 +37,8 @@ public class LightPreprocessor extends GlslPreprocessor {
 			shaderFile = shaderFile.replaceFirst("\n//#define tinged_lights\n", "\n\n");
 			return actualProcessor.process(shaderFile);
 		}
+		
+		if (particlePreprocessor != null) shaderFile = particlePreprocessor.process(shaderFile);
 		
 		boolean containsLight = false;
 		
