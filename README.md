@@ -16,3 +16,6 @@ Tinged Lights however, used a lighting engine (or well, currently multiple engin
 This allows lights to properly be obstructed by walls instead of either having light go through, or having colors go through
 
 In the future, when I have a more custom lighting engine, This would also allow me to have glass tint the light color
+
+## A place to talk
+I have a [discord server](https://discord.gg/qFEBSsm), in which my mods are discussed
