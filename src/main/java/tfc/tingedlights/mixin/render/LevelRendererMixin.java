@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import tfc.tingedlights.api.DynamicLightApi;
 import tfc.tingedlights.util.OnThread;
 
 import javax.annotation.Nullable;
@@ -27,6 +28,7 @@ public class LevelRendererMixin {
 //			LightManager manager = lightSupport.getManager();
 //			manager.tick();
 //		}
+		DynamicLightApi.tick();
 		OnThread.run();
 	}
 }

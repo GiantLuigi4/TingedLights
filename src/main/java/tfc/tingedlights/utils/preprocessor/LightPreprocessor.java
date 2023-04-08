@@ -1,4 +1,4 @@
-package tfc.tingedlights.utils;
+package tfc.tingedlights.utils.preprocessor;
 
 import com.mojang.blaze3d.preprocessor.GlslPreprocessor;
 import com.mojang.blaze3d.shaders.Program;
@@ -33,10 +33,10 @@ public class LightPreprocessor extends GlslPreprocessor {
 	
 	@Override
 	public List<String> process(String shaderFile) {
-		if (shaderFile.contains("\n//#define tinged_lights\n")) { // find a better way?
-			shaderFile = shaderFile.replaceFirst("\n//#define tinged_lights\n", "\n\n");
+		if (shaderFile.contains("\n//#define tinged_lights\n"))
 			return actualProcessor.process(shaderFile);
-		}
+		if (shaderFile.contains("\n//#define tinged_lights:dynamic\n"))
+			return actualProcessor.process(shaderFile);
 		
 		if (particlePreprocessor != null) shaderFile = particlePreprocessor.process(shaderFile);
 		

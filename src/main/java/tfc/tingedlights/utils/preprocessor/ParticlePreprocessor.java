@@ -1,4 +1,4 @@
-package tfc.tingedlights.utils;
+package tfc.tingedlights.utils.preprocessor;
 
 import com.mojang.blaze3d.shaders.Program;
 import tfc.tingedlights.Options;
@@ -37,7 +37,7 @@ public class ParticlePreprocessor {
 			try {
 				String typeStr = type.getExtension();
 				
-				File file = new File("shader_dump/tinged_lights/particle/core/particle" + typeStr);
+				File file = new File("shader_dump/particle/core/particle" + typeStr);
 				if (!file.exists()) {
 					file.getParentFile().mkdirs();
 					file.createNewFile();

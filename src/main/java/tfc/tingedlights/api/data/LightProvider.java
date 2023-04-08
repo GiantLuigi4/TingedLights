@@ -2,9 +2,10 @@ package tfc.tingedlights.api.data;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import tfc.tingedlights.data.access.TingedLightsBlockAttachments;
+
+import javax.annotation.Nullable;
 
 public abstract class LightProvider {
 	/**
@@ -18,7 +19,7 @@ public abstract class LightProvider {
 	 * @param pPos   the position of the block
 	 * @return the light to add, or null if it should not add a light
 	 */
-	public abstract Light createLight(BlockState pState, BlockGetter pLevel, BlockPos pPos);
+	public abstract Light createLight(BlockState pState, @Nullable BlockGetter pLevel, @Nullable BlockPos pPos);
 	
 	/**
 	 * When a block that provides a light is placed, this gets called to determine bright the light should be
@@ -30,13 +31,13 @@ public abstract class LightProvider {
 	 * @param pPos   the position of the block
 	 * @return the brightness of the light
 	 */
-	public abstract int getBrightness(BlockState pState, BlockGetter pLevel, BlockPos pPos);
+	public abstract int getBrightness(BlockState pState, @Nullable BlockGetter pLevel, @Nullable BlockPos pPos);
 	
 	/**
 	 * The result of this method should not assume that an BlockEntity exists, nor that the block state in the world is the state being received by the method
 	 * If you do not have the information needed to figure out what this should return, assume it should return true
 	 * <p>
-	 * This is used to determine if the block provides a light, mostly in {@link LightProvider#needsUpdate(BlockState, BlockState, Level, BlockPos)}
+	 * This is used to determine if the block provides a light, mostly in {@link LightProvider#needsUpdate(BlockState, BlockState, BlockGetter, BlockPos)}
 	 * This is used for checking if a lighting update may be needed
 	 * <p>
 	 * While this method could call createLight and check if that returns null, that's a slow and potentially problematic approach, so no default implementation is provided
@@ -48,7 +49,7 @@ public abstract class LightProvider {
 	 *               in the case that it is mutable, you should make sure that it does not change
 	 * @return if the block provides (or may have been providing) light
 	 */
-	public abstract boolean providesLight(BlockState pState, BlockGetter pLevel, BlockPos pPos);
+	public abstract boolean providesLight(BlockState pState, @Nullable BlockGetter pLevel, @Nullable BlockPos pPos);
 	
 	/**
 	 * This is used to determine if a lighting update is necessary

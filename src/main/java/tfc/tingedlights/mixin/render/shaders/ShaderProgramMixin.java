@@ -8,7 +8,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import tfc.tingedlights.utils.LightPreprocessor;
+import tfc.tingedlights.Options;
+import tfc.tingedlights.utils.preprocessor.DynamicLightPreprocessor;
+import tfc.tingedlights.utils.preprocessor.LightPreprocessor;
 
 import java.io.InputStream;
 
@@ -26,10 +28,13 @@ public class ShaderProgramMixin {
 	
 	@ModifyVariable(at = @At("HEAD"), method = "compileShaderInternal", ordinal = 0, argsOnly = true)
 	private static GlslPreprocessor wrapProcessor(GlslPreprocessor glslPreprocessor) {
-		// TODO: check shader type
-		GlslPreprocessor out = new LightPreprocessor(glslPreprocessor, name.get(), type.get());
+		if (Options.dynamicLights)
+			glslPreprocessor = new DynamicLightPreprocessor(glslPreprocessor, name.get(), type.get());
+		
+		glslPreprocessor = new LightPreprocessor(glslPreprocessor, name.get(), type.get());
+		
 		name.remove();
 		type.remove();
-		return out;
+		return glslPreprocessor;
 	}
 }

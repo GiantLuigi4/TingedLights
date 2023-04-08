@@ -24,6 +24,7 @@
     "render.others.FirstPersonHandMixin",
     "render.others.LightingMixin",
     "render.others.ParticleEngineMixin",
+    "render.shaders.ShaderInstanceMixin",
     "render.shaders.ShaderInstancePreprocessorMixin",
     "render.shaders.ShaderProgramMixin",
     "render.vertex.VertexElementMixin",

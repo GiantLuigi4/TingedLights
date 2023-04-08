@@ -5,13 +5,27 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tfc.tingedlights.Options;
+import tfc.tingedlights.utils.preprocessor.DynamicLightPreprocessor;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 @Mixin(targets = "net.minecraft.client.renderer.ShaderInstance$1")
 public class ShaderInstancePreprocessorMixin {
+	private static final String dynamicLightMethod;
+	
+	static {
+		try {
+			InputStream stream = DynamicLightPreprocessor.class.getClassLoader().getResourceAsStream("glsl/dynamic_light_method.glsl");
+			dynamicLightMethod = new String(stream.readAllBytes());
+			stream.close();
+		} catch (Throwable err) {
+			throw new RuntimeException(err);
+		}
+	}
+	
 	@Inject(at = @At("RETURN"), method = "applyImport", cancellable = true)
 	public void postApplyInput(boolean p_173374_, String p_173375_, CallbackInfoReturnable<String> cir) {
 		if (p_173375_.equals("shaders/include/light.glsl")) {
@@ -55,6 +69,9 @@ public class ShaderInstancePreprocessorMixin {
 			out += sub.substring(1, targetMethod);
 			out += "    #endif\n" +
 					"}";
+			if (Options.dynamicLights) {
+				out += dynamicLightMethod;
+			}
 			
 			StringBuilder output = new StringBuilder();
 			boolean inserted = false;
