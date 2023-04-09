@@ -7,9 +7,7 @@ vec4((Position).xyz
 #ifdef ChunkOffset
 +ChunkOffset
 #endif
-#ifdef CameraOffset
--CameraOffset
-#endif
+-TingedLights_CameraOffset
 #ifdef ModelViewMat
 +extract_matrix_offset(ModelViewMat)
 #endif

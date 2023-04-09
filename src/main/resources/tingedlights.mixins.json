@@ -10,6 +10,7 @@
     "MojangWhy",
     "backend.BlockMixin",
     "backend.ClientLevelMixin",
+    "backend.ItemMixin",
     "backend.LevelChunkMixin",
     "backend.LevelLightEngineMixin",
     "backend.LevelMixin",

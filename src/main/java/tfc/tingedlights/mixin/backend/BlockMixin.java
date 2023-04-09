@@ -6,6 +6,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.extensions.IForgeBlockState;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import tfc.tingedlights.api.data.Light;
 import tfc.tingedlights.api.interfaces.QuadFunction;
 import tfc.tingedlights.api.interfaces.TriFunction;
@@ -13,9 +14,13 @@ import tfc.tingedlights.data.access.TingedLightsBlockAttachments;
 
 @Mixin(Block.class)
 public class BlockMixin implements TingedLightsBlockAttachments {
+	@Unique
 	TriFunction<BlockState, BlockGetter, BlockPos, Light> lightCreation = (a, b, c) -> null;
+	@Unique
 	TriFunction<BlockState, BlockGetter, BlockPos, Integer> brightnessGetter = IForgeBlockState::getLightEmission;
+	@Unique
 	TriFunction<BlockState, BlockGetter, BlockPos, Boolean> lightChecker = (a, b, c) -> false;
+	@Unique
 	QuadFunction<BlockState, BlockState, BlockGetter, BlockPos, Boolean> updateChecker = (pState, pOld, pLevel, pPos) -> {
 		if (pOld instanceof TingedLightsBlockAttachments yep)
 			yep.providesLight(pOld, pLevel, pPos);

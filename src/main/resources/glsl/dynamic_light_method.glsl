@@ -15,7 +15,13 @@ vec4 dynamic_lights_sample_light(vec4 pos, sampler2D lightMap, ivec2 uv) {
 
     vec4 mc = minecraft_sample_lightmap(lightMap, uv);
     if (index == 15) return mc;
-    return vec4(TingedLights_lightColors[index], 0) + mc;
+
+    //vec3 v3 = (TingedLights_lightColors[index] * 5) + 1;
+    //vec4 outV = mc / vec4(v3, 0);
+
+    vec4 outV = mc + vec4(TingedLights_lightColors[index], 0);
+    outV = clamp(outV, 0, 1);
+    return outV;
 }
 vec4 extract_matrix_scale(mat4 matr) {
     return vec4(

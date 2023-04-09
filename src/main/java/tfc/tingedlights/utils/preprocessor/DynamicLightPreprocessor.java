@@ -52,7 +52,12 @@ public class DynamicLightPreprocessor extends GlslPreprocessor {
 		
 		StringBuilder builder = new StringBuilder();
 		
+		int ln = 0;
+		
 		for (String s : pShaderData.split("\n")) {
+			if (ln == 1) builder.append("uniform vec3 TingedLights_CameraOffset;\n");
+			ln++;
+			
 			if (s.equals("in vec3 Position;")) injection = injection.replace("#ifdef Position", "#if 1");
 			if (s.equals("in vec4 Position;")) injection = injection.replace("#ifdef Position", "#if 1");
 			if (s.equals("uniform vec3 ChunkOffset;")) injection = injection.replace("#ifdef ChunkOffset", "#if 1");
