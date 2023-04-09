@@ -3,6 +3,7 @@ package tfc.tingedlights.api;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.MinecraftForge;
 import tfc.tingedlights.api.data.LightProvider;
+import tfc.tingedlights.api.events.LightBlockSetupEvent;
 import tfc.tingedlights.data.access.TingedLightsBlockAttachments;
 
 public class LightBlockApi {

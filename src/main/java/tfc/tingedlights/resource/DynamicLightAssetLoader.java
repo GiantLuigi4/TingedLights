@@ -11,6 +11,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import tfc.tingedlights.api.DynamicLightApi;
 import tfc.tingedlights.api.data.Light;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.access.TingedLightsBlockAttachments;
@@ -77,6 +78,8 @@ public class DynamicLightAssetLoader extends SimpleJsonResourceReloadListener {
 					attachments.setFunctions(defaultLightProvider, defaultBrightnessProvider);
 			}
 		}
+		
+		DynamicLightApi.postSetup();
 	}
 	
 	public Light parseLightType(JsonObject asJsonObject, String file, String element) {

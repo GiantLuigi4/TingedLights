@@ -11,6 +11,7 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import tfc.tingedlights.api.LightBlockApi;
 import tfc.tingedlights.api.data.Light;
 import tfc.tingedlights.api.data.LightProvider;
 import tfc.tingedlights.api.interfaces.QuadFunction;
@@ -109,6 +110,8 @@ public class TingedLightAssetLoader extends SimpleJsonResourceReloadListener {
 					attachments.setFunctions(defaultLightProvider, defaultBrightnessProvider, defaultIsSource, defaultUpdateChecker);
 			}
 		}
+		
+		LightBlockApi.postSetup();
 	}
 	
 	public Map<String, Light> parseTypes(JsonObject object, String file) {
