@@ -1,5 +1,6 @@
 package tfc.tingedlights;
 
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -13,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import tfc.tingedlights.api.data.Light;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.access.LevelWithColoredLightSupport;
+import tfc.tingedlights.resource.DynamicLightAssetLoader;
 import tfc.tingedlights.resource.TingedLightAssetLoader;
 
 @Mod("tinged_lights")
@@ -24,7 +26,9 @@ public class TingedLights {
 		
 		if (FMLEnvironment.dist.isClient()) {
 			ReloadableResourceManager reloadableResourceManager = (ReloadableResourceManager) Minecraft.getInstance().getResourceManager();
-			reloadableResourceManager.registerReloadListener(new TingedLightAssetLoader(new GsonBuilder().setLenient().create()));
+			Gson gson = new GsonBuilder().setLenient().create();
+			reloadableResourceManager.registerReloadListener(new TingedLightAssetLoader(gson));
+			reloadableResourceManager.registerReloadListener(new DynamicLightAssetLoader(gson));
 		}
 	}
 	

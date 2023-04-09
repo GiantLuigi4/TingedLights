@@ -3,9 +3,13 @@ package tfc.tingedlights.api;
 import net.minecraftforge.eventbus.api.Event;
 
 public class LightBlockSetupEvent extends Event {
-	private static final LightBlockApi API = new LightBlockApi();
+	private final LightBlockApi API;
 	
-	public static LightBlockApi getAPI() {
+	public LightBlockSetupEvent(LightBlockApi API) {
+		this.API = API;
+	}
+	
+	public LightBlockApi getAPI() {
 		return API;
 	}
 }

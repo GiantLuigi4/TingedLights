@@ -1,5 +1,119 @@
 {
   "minecraft:lava_bucket": {
-    "color": [223, 127, 40]
+    "color": [223, 127, 40],
+    "brightness": 15
+  },
+  "minecraft:glow_ink_sac": {
+    "color": [126, 254, 192],
+    "brightness": 5
+  },
+  "minecraft:amethyst_shard": {
+    "color": [207, 160, 241],
+    "brightness": 3
+  },
+  "minecraft:glow_berries": {
+    "color": [246, 225, 109],
+    "brightness": 5
+  },
+  "minecraft:prismarine_crystals": {
+    "color": [179, 215, 201],
+    "brightness": 6
+  },
+  "minecraft:blaze_rod": {
+    "color": [254, 242, 54],
+    "brightness": 8
+  },
+  "minecraft:blaze_powder": {
+    "color": [254, 242, 54],
+    "brightness": 5
+  },
+  "minecraft:fire_charge": {
+    "color": [237, 171, 32],
+    "brightness": 4
+  },
+  "minecraft:candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:white_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:orange_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:magenta_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:light_blue_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:yellow_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:lime_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:pink_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:gray_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:light_gray_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:cyan_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:purple_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:blue_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:brown_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:green_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:red_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
+  },
+  "minecraft:black_candle": {
+    "start": [230, 202, 157],
+    "end": [156, 127, 88],
+    "transition_start": 14
   }
 }
