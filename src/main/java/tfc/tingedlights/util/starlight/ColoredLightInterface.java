@@ -4,6 +4,7 @@ import ca.spottedleaf.starlight.common.chunk.ExtendedChunk;
 import ca.spottedleaf.starlight.common.light.BlockStarLightEngine;
 import ca.spottedleaf.starlight.common.light.SWMRNibbleArray;
 import com.mojang.datafixers.util.Pair;
+import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -79,6 +80,8 @@ public class ColoredLightInterface extends DummyLightInterface implements OutOfL
 			synchronized (events) {
 				ArrayList<Pair<CompletableFuture<Void>, Runnable>> runLater = new ArrayList<>();
 				for (int i = 0; i < Minecraft.getInstance().options.renderDistance * Minecraft.getInstance().options.renderDistance; i++) {
+					if (events.isEmpty()) break;
+					
 					Pair<CompletableFuture<Void>, Runnable> event = events.pop();
 					if (event.getFirst().isCancelled()) continue;
 					
@@ -97,31 +100,15 @@ public class ColoredLightInterface extends DummyLightInterface implements OutOfL
 		CompletableFuture<Void> s = super.sectionChange(pPos, newEmptyValue);
 		
 		if (!newEmptyValue) {
-//			synchronized (events) {
-//				events.add(Pair.of(s, () -> {
-//					BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-//
-//					for (int x = 0; x < 16; x++) {
-//						for (int y = 0; y < 16; y++) {
-//							for (int z = 0; z < 16; z++) {
-//								if (x != 15 && y != 15 && x != 0 && y != 0 && z != 0 && z != 15)
-//									z = 14;
-//
-//								pos.set(pPos.minBlockX() + x, pPos.minBlockY() + y, pPos.minBlockZ() + z);
-//
-//								if (x == 0) blockChange(pos);
-//								if (x == 15) blockChange(pos);
-//
-//								if (z == 0) blockChange(pos);
-//								if (z == 15) blockChange(pos);
-//
-//								if (y == 0) blockChange(pos);
-//								if (y == 15) blockChange(pos);
-//							}
-//						}
-//					}
-//				}));
-//			}
+			synchronized (events) {
+				events.add(Pair.of(s, () -> {
+					BlockStarLightEngine engine = getBlockLightEngine();
+					ShortArrayList list = new ShortArrayList();
+					list.add((short) pPos.y());
+					engine.checkChunkEdges(chunkSource, pPos.x(), pPos.z(), list);
+					releaseBlockLightEngine(engine);
+				}));
+			}
 		}
 		
 		return s;

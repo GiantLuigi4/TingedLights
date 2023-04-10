@@ -48,6 +48,7 @@ public class ColoredBlockLightingEngine extends BlockLightEngine {
 	public int runUpdates(int p_75648_, boolean p_75649_, boolean p_75650_) {
 		if (!events.isEmpty()) {
 			for (int i = 0; i < Minecraft.getInstance().options.renderDistance * Minecraft.getInstance().options.renderDistance; i++) {
+				if (events.isEmpty()) break;
 				events.pop().run();
 			}
 		}
