@@ -1,4 +1,4 @@
-package tfc.tingedlights.util;
+package tfc.tingedlights.util.vanilla;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -58,28 +58,30 @@ public class ColoredBlockLightingEngine extends BlockLightEngine {
 	public void updateSectionStatus(SectionPos pPos, boolean pIsEmpty) {
 		super.updateSectionStatus(pPos, pIsEmpty);
 		
-		events.add(() -> {
-			BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-			
-			for (int x = 0; x < 16; x++) {
-				for (int y = 0; y < 16; y++) {
-					for (int z = 0; z < 16; z++) {
-						if (x != 15 && y != 15 && x != 0 && y != 0 && z != 0 && z != 15)
-							z = 14;
-						
-						pos.set(pPos.minBlockX() + x, pPos.minBlockY() + y, pPos.minBlockZ() + z);
-						
-						if (x == 0) checkNode(pos.asLong());
-						if (x == 15) checkNode(pos.asLong());
-						
-						if (z == 0) checkNode(pos.asLong());
-						if (z == 15) checkNode(pos.asLong());
-						
-						if (y == 0) checkNode(pos.asLong());
-						if (y == 15) checkNode(pos.asLong());
+		if (!pIsEmpty) {
+			events.add(() -> {
+				BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+				
+				for (int x = 0; x < 16; x++) {
+					for (int y = 0; y < 16; y++) {
+						for (int z = 0; z < 16; z++) {
+							if (x != 15 && y != 15 && x != 0 && y != 0 && z != 0 && z != 15)
+								z = 14;
+							
+							pos.set(pPos.minBlockX() + x, pPos.minBlockY() + y, pPos.minBlockZ() + z);
+							
+							if (x == 0) checkNode(pos.asLong());
+							if (x == 15) checkNode(pos.asLong());
+							
+							if (z == 0) checkNode(pos.asLong());
+							if (z == 15) checkNode(pos.asLong());
+							
+							if (y == 0) checkNode(pos.asLong());
+							if (y == 15) checkNode(pos.asLong());
+						}
 					}
 				}
-			}
-		});
+			});
+		}
 	}
 }

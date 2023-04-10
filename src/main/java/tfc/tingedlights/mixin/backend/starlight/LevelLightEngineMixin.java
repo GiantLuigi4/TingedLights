@@ -1,14 +1,15 @@
-package tfc.tingedlights.mixin.backend;
+package tfc.tingedlights.mixin.backend.starlight;
 
+import ca.spottedleaf.starlight.common.light.StarLightInterface;
 import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.chunk.LightChunkGetter;
-import net.minecraft.world.level.lighting.BlockLightEngine;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,13 +18,12 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import tfc.tingedlights.LightBlender;
 import tfc.tingedlights.api.data.Light;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.access.ColoredLightEngine;
 import tfc.tingedlights.data.access.IHoldColoredLights;
-import tfc.tingedlights.util.ColoredBlockLightingEngine;
+import tfc.tingedlights.util.starlight.ColoredLightInterface;
 import tfc.tingedlights.utils.LightInfo;
 
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ public class LevelLightEngineMixin implements ColoredLightEngine {
 	@Final
 	protected LevelHeightAccessor levelHeightAccessor;
 	@Unique
-	final Map<Light, BlockLightEngine> engines = new HashMap<>();
+	final Map<Light, StarLightInterface> engines = new HashMap<>();
 	@Unique
 	final ArrayList<ChunkPos> enabledLights = new ArrayList<>();
 	@Unique
@@ -68,77 +68,38 @@ public class LevelLightEngineMixin implements ColoredLightEngine {
 		}
 	}
 	
-	@Inject(at = @At("HEAD"), method = "updateSectionStatus")
-	public void preUpdateSection(SectionPos pPos, boolean pIsEmpty, CallbackInfo ci) {
-		if (enable) {
-			if (pIsEmpty) enabledSections.remove(pPos);
-			else enabledSections.add(pPos);
-			
-			for (BlockLightEngine value : engines.values()) value.updateSectionStatus(pPos, pIsEmpty);
-		}
-	}
-	
-	@Inject(at = @At("HEAD"), method = "enableLightSources")
-	public void postEnableLights(ChunkPos p_75812_, boolean p_75813_, CallbackInfo ci) {
-		if (enable) {
-			if (p_75813_) enabledLights.add(p_75812_);
-			else enabledLights.remove(p_75812_);
-			
-			for (Map.Entry<Light, BlockLightEngine> lightBlockLightEngineEntry : engines.entrySet())
-				lightBlockLightEngineEntry.getValue().enableLightSources(p_75812_, p_75813_);
-		}
-	}
-	
-	@Inject(at = @At("HEAD"), method = "runUpdates")
-	public void preRunUpdates(int p_75809_, boolean p_75810_, boolean p_75811_, CallbackInfoReturnable<Integer> cir) {
-		if (enable) {
-			int v = p_75809_;
-			for (int i1 = 0; i1 < 10; i1++) { // this shouldn't really be able to fail more than once in a row
-				try {
-					BlockLightEngine[] collection = engines.values().toArray(new BlockLightEngine[0]);
-					
-					for (BlockLightEngine value : collection) {
-						if (v == 0) return;
-						v -= v - value.runUpdates(v, false, true);
-					}
-					
-					return;
-				} catch (Throwable ignored) {
-				}
-			}
-		}
-	}
-	
-	protected void addChunk(Light key, ChunkPos pos, BlockLightEngine engine) {
+	protected void addChunk(Light key, ChunkPos pos, StarLightInterface engine) {
 		BlockGetter chunk = lightChunkGetter.getChunkForLighting(pos.x, pos.z);
 		if (chunk instanceof IHoldColoredLights colorLightHolder) {
 			for (Collection<LightInfo> source : colorLightHolder.getSources()) {
 				for (LightInfo lightInfo : source) {
 					if (lightInfo.light().equals(key)) {
-						engine.checkBlock(lightInfo.pos());
+						engine.blockChange(lightInfo.pos());
 					}
 				}
 			}
 		}
 	}
 	
-	protected BlockLightEngine getEngine(Light key) {
+	protected StarLightInterface getEngine(Light key) {
 		return engines.computeIfAbsent(key, (k) -> {
 			totalEngines++;
-			BlockLightEngine engine = new ColoredBlockLightingEngine(key, lightChunkGetter, level);
-			for (SectionPos enabledSection : enabledSections) engine.updateSectionStatus(enabledSection, false);
-			for (ChunkPos enabledLight : enabledLights) engine.enableLightSources(enabledLight, true);
 			
-			for (ChunkPos enabledLight : enabledLights) addChunk(key, enabledLight, engine);
+			ColoredLightInterface engine = new ColoredLightInterface((LevelLightEngine) (Object) this, (Level) level, key, lightChunkGetter);
+			StarLightInterface casted = (StarLightInterface) (Object) engine;
+			for (SectionPos enabledSection : enabledSections)
+				casted.sectionChange(enabledSection, true);
 			
-			return engine;
+			for (ChunkPos enabledLight : enabledLights) addChunk(key, enabledLight, casted);
+			
+			return casted;
 		});
 	}
 	
 	@Override
 	public void updateLight(Light light, BlockPos pos) {
 		if (enable) {
-			getEngine(light).checkBlock(pos);
+			getEngine(light).blockChange(pos);
 		}
 	}
 	
@@ -153,15 +114,15 @@ public class LevelLightEngineMixin implements ColoredLightEngine {
 			try {
 				//noinspection RedundantSuppression
 				//noinspection unchecked
-				Map.Entry<Light, BlockLightEngine>[] collection = engines.entrySet().toArray(new Map.Entry[0]);
+				Map.Entry<Light, StarLightInterface>[] collection = engines.entrySet().toArray(new Map.Entry[0]);
 				
 				int engineCount = collection.length;
 				Color[] colors = new Color[engineCount];
 				boolean hasNonZero = false;
 				
 				for (int i = 0; i < engineCount; i++) {
-					Map.Entry<Light, BlockLightEngine> lightBlockLightEngineEntry = collection[i];
-					int val = lightBlockLightEngineEntry.getValue().getLightValue(pos);
+					Map.Entry<Light, StarLightInterface> lightBlockLightEngineEntry = collection[i];
+					int val = lightBlockLightEngineEntry.getValue().getBlockReader().getLightValue(pos);
 					if (val == 0) continue;
 					colors[i] = lightBlockLightEngineEntry.getKey().getColor((byte) val);
 					hasNonZero = true;
@@ -173,7 +134,8 @@ public class LevelLightEngineMixin implements ColoredLightEngine {
 				} else if (!hasNonZero) return Color.BLACK;
 				
 				return LightBlender.blend(colors);
-			} catch (Throwable ignored) {
+			} catch (Throwable err) {
+				err.printStackTrace();
 			}
 		}
 		return Color.BLACK;
@@ -194,5 +156,41 @@ public class LevelLightEngineMixin implements ColoredLightEngine {
 	@Override
 	public void enableEngine(Light light) {
 		getEngine(light);
+	}
+	
+	@Unique
+	public void preUpdateSection(SectionPos pPos, boolean pIsEmpty) {
+		if (enable) {
+			if (pIsEmpty) enabledSections.remove(pPos);
+			else enabledSections.add(pPos);
+			
+			for (StarLightInterface value : engines.values())
+				value.sectionChange(pPos, pIsEmpty);
+		}
+	}
+	
+	@Unique
+	public void postEnableLights(ChunkPos p_75812_, boolean p_75813_) {
+		if (enable) {
+			if (p_75813_) enabledLights.add(p_75812_);
+			else enabledLights.remove(p_75812_);
+		}
+	}
+	
+	@Unique
+	public void preRunUpdates() {
+		if (enable) {
+			for (int i1 = 0; i1 < 10; i1++) { // this shouldn't really be able to fail more than once in a row
+				try {
+					StarLightInterface[] collection = engines.values().toArray(new StarLightInterface[0]);
+					
+					for (StarLightInterface value : collection)
+						value.propagateChanges();
+					
+					return;
+				} catch (Throwable ignored) {
+				}
+			}
+		}
 	}
 }
