@@ -7,8 +7,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.LightManager;
+import tfc.tingedlights.util.BetterAdjacencyInfo;
 
 import java.util.BitSet;
 
@@ -22,166 +24,135 @@ public class AOFace {
 	}
 	
 	Color[] colors = null;
+	boolean[] dimmed = null;
 	
 	public void calculate(Direction pDirection, BlockAndTintGetter pLevel, BlockState pState, BlockPos pPos, BitSet pShapeFlags) {
-//		BlockPos lightProbePos = pShapeFlags.get(0) ? pPos.relative(bakedQuad.getDirection()) : pPos;
-		LightManager manager = (LightManager) pLevel.getLightEngine();
-		colors = new Color[4];
-
-//		BlockPos blockpos = pShapeFlags.get(0) ? pPos.relative(pDirection) : pPos;
 		BlockPos blockpos = pShapeFlags.get(0) ? pPos.relative(pDirection) : pPos;
+		LightManager manager = (LightManager) pLevel.getLightEngine();
 		
-		ModelBlockRenderer.AdjacencyInfo modelblockrenderer$adjacencyinfo = ModelBlockRenderer.AdjacencyInfo.fromFacing(pDirection);
-		BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
-		blockpos$mutableblockpos.set(blockpos);
-		// fallback srcColor
-		Color self = getLightColor(manager, pLevel.getBlockState(blockpos), pLevel, blockpos$mutableblockpos);
-
-//		ModelBlockRenderer.Cache modelblockrenderer$cache = ModelBlockRenderer.CACHE.get();
+		BetterAdjacencyInfo adjacency = new BetterAdjacencyInfo(ModelBlockRenderer.AdjacencyInfo.fromFacing(pDirection), pDirection);
 		
-		BlockState state;
+		Vec3[] vertices = new Vec3[4];
+		for (int i = 0; i < 4; i++) {
+			int index = i * 8;
+			vertices[i] = new Vec3(
+					Float.intBitsToFloat(bakedQuad.getVertices()[index + 0]),
+					Float.intBitsToFloat(bakedQuad.getVertices()[index + 1]),
+					Float.intBitsToFloat(bakedQuad.getVertices()[index + 2])
+			);
+		}
 		
-		// check neighbor blocks
-		// set a srcColor based off that
-		blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[0]);
-		state = pLevel.getBlockState(blockpos$mutableblockpos);
-		Color corner0Light = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
+		Color none = new Color(0, 0, 0);
 		
-		blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[1]);
-		state = pLevel.getBlockState(blockpos$mutableblockpos);
-		Color corner1Light = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
+		Color fallback = LightBlender.getLight(pLevel, manager, blockpos, none);
 		
-		blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[2]);
-		state = pLevel.getBlockState(blockpos$mutableblockpos);
-		Color corner2Light = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
+		BlockPos.MutableBlockPos posMut = new BlockPos.MutableBlockPos();
+		BlockPos.MutableBlockPos offset = new BlockPos.MutableBlockPos();
 		
-		blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[3]);
-		state = pLevel.getBlockState(blockpos$mutableblockpos);
-		Color corner3Light = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
-		
-		int lb;
-		
-		// check light blocking blocks
-		// update corner colors based off that
-		state = pLevel.getBlockState(blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[0]));
-		lb = lightObstruction(state, pLevel, blockpos$mutableblockpos);
-		if (lb == 15 /* TODO: find a good threshold */) corner0Light = self; // set fallback
-		boolean flag = !state.isViewBlocking(pLevel, blockpos$mutableblockpos) || lb == 0;
-		
-		state = pLevel.getBlockState(blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[1]));
-		lb = lightObstruction(state, pLevel, blockpos$mutableblockpos);
-		if (lb == 15) corner1Light = self; // set fallback
-		boolean flag1 = !state.isViewBlocking(pLevel, blockpos$mutableblockpos) || lb == 0;
-		
-		state = pLevel.getBlockState(blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[2]));
-		lb = lightObstruction(state, pLevel, blockpos$mutableblockpos);
-		if (lb == 15) corner2Light = self; // set fallback
-		boolean flag2 = !state.isViewBlocking(pLevel, blockpos$mutableblockpos) || lb == 0;
-		
-		state = pLevel.getBlockState(blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[3]));
-		lb = lightObstruction(state, pLevel, blockpos$mutableblockpos);
-		if (lb == 15) corner3Light = self; // set fallback
-		boolean flag3 = !state.isViewBlocking(pLevel, blockpos$mutableblockpos) || lb == 0;
-		
-		Color trueColor0;
-		if (!flag2 && !flag) {
-			trueColor0 = corner0Light;
-		} else {
-			blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[0]).move(modelblockrenderer$adjacencyinfo.corners[2]);
-			state = pLevel.getBlockState(blockpos$mutableblockpos);
-			if (lightObstruction(state, pLevel, blockpos$mutableblockpos) == 15) {
-				trueColor0 = self;
-			} else {
-				trueColor0 = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
+		colors = new Color[4];
+		dimmed = new boolean[4];
+		for (int i = 0; i < vertices.length; i++) {
+			colors[i] = LightBlender.blend(
+					vertices[i]
+							.subtract(0.5, 0.5, 0.5)
+							.multiply(
+									.1 * Math.abs(pDirection.getStepX()) + 1,
+									.1 * Math.abs(pDirection.getStepY()) + 1,
+									.1 * Math.abs(pDirection.getStepZ()) + 1
+							)
+							.add(0.5, 0.5, 0.5)
+							.add(pPos.getX(), pPos.getY(), pPos.getZ())
+					,
+					manager, pLevel
+			);
+			
+			BlockState state;
+			int lb;
+			
+			// TODO: fix corners
+			if (i == 0) {
+				offset.set(0, 0, 0).move(adjacency.edges[0]);
+				posMut.set(blockpos).move(offset);
+				state = pLevel.getBlockState(posMut);
+				lb = lightObstruction(state, pLevel, posMut);
+				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
+				
+				offset.set(0, 0, 0).move(adjacency.edges[3]);
+				posMut.set(blockpos).move(offset);
+				state = pLevel.getBlockState(posMut);
+				lb = lightObstruction(state, pLevel, posMut);
+				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
+				
+				offset.set(0, 0, 0).move(adjacency.edges[3]).move(adjacency.edges[0]);
+				posMut.set(blockpos).move(offset);
+				state = pLevel.getBlockState(posMut);
+				lb = lightObstruction(state, pLevel, posMut);
+				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
 			}
-		}
-		
-		Color trueCorner1;
-		if (!flag3 && !flag) {
-			trueCorner1 = corner1Light;
-		} else {
-			blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[0]).move(modelblockrenderer$adjacencyinfo.corners[3]);
-			state = pLevel.getBlockState(blockpos$mutableblockpos);
-			if (lightObstruction(state, pLevel, blockpos$mutableblockpos) == 15) {
-				trueCorner1 = self;
-			} else {
-				trueCorner1 = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
+			if (i == 1) {
+				offset.set(0, 0, 0).move(adjacency.edges[0]);
+				
+				posMut.set(blockpos).move(offset);
+				state = pLevel.getBlockState(posMut);
+				lb = lightObstruction(state, pLevel, posMut);
+				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
+				
+				offset.set(0, 0, 0).move(adjacency.edges[2]);
+				posMut.set(blockpos).move(offset);
+				state = pLevel.getBlockState(posMut);
+				lb = lightObstruction(state, pLevel, posMut);
+				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
+				
+				offset.set(0, 0, 0).move(adjacency.edges[2]).move(adjacency.edges[0]);
+				posMut.set(blockpos).move(offset);
+				state = pLevel.getBlockState(posMut);
+				lb = lightObstruction(state, pLevel, posMut);
+				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
 			}
-		}
-		
-		Color trueCorner2;
-		if (!flag2 && !flag1) {
-			trueCorner2 = corner2Light;
-		} else {
-			blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[1]).move(modelblockrenderer$adjacencyinfo.corners[2]);
-			state = pLevel.getBlockState(blockpos$mutableblockpos);
-			if (lightObstruction(state, pLevel, blockpos$mutableblockpos) == 15) {
-				trueCorner2 = self;
-			} else {
-				trueCorner2 = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
+			if (i == 2) {
+				offset.set(0, 0, 0).move(adjacency.edges[1]);
+				
+				posMut.set(blockpos).move(offset);
+				state = pLevel.getBlockState(posMut);
+				lb = lightObstruction(state, pLevel, posMut);
+				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
+				
+				offset.set(0, 0, 0).move(adjacency.edges[2]);
+				posMut.set(blockpos).move(offset);
+				state = pLevel.getBlockState(posMut);
+				lb = lightObstruction(state, pLevel, posMut);
+				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
+				
+				offset.set(0, 0, 0).move(adjacency.edges[2]).move(adjacency.edges[1]);
+				posMut.set(blockpos).move(offset);
+				state = pLevel.getBlockState(posMut);
+				lb = lightObstruction(state, pLevel, posMut);
+				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
 			}
-		}
-		
-		Color trueCorner3;
-		if (!flag3 && !flag1) {
-			trueCorner3 = corner3Light;
-		} else {
-			blockpos$mutableblockpos.setWithOffset(blockpos, modelblockrenderer$adjacencyinfo.corners[1]).move(modelblockrenderer$adjacencyinfo.corners[3]);
-			state = pLevel.getBlockState(blockpos$mutableblockpos);
-			if (lightObstruction(state, pLevel, blockpos$mutableblockpos) == 15) {
-				trueCorner3 = self;
-			} else {
-				trueCorner3 = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
+			if (i == 3) {
+				offset.set(0, 0, 0).move(adjacency.edges[1]);
+				
+				posMut.set(blockpos).move(offset);
+				state = pLevel.getBlockState(posMut);
+				lb = lightObstruction(state, pLevel, posMut);
+				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
+				
+				offset.set(0, 0, 0).move(adjacency.edges[3]);
+				posMut.set(blockpos).move(offset);
+				state = pLevel.getBlockState(posMut);
+				lb = lightObstruction(state, pLevel, posMut);
+				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
+				
+				offset.set(0, 0, 0).move(adjacency.edges[3]).move(adjacency.edges[1]);
+				posMut.set(blockpos).move(offset);
+				state = pLevel.getBlockState(posMut);
+				lb = lightObstruction(state, pLevel, posMut);
+				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
 			}
-		}
-		
-		// not really sure what this is
-		Color something = getLightColor(manager, pState, pLevel, pPos);
-		blockpos$mutableblockpos.setWithOffset(pPos, pDirection);
-		state = pLevel.getBlockState(blockpos$mutableblockpos);
-		if (pShapeFlags.get(0) || !state.isSolidRender(pLevel, blockpos$mutableblockpos)) {
-			something = getLightColor(manager, state, pLevel, blockpos$mutableblockpos);
-		}
-		
-		ModelBlockRenderer.AmbientVertexRemap modelblockrenderer$ambientvertexremap = ModelBlockRenderer.AmbientVertexRemap.fromFacing(pDirection);
-		if (pShapeFlags.get(1) && modelblockrenderer$adjacencyinfo.doNonCubicWeight) {
-			// I think this is forge's doing
-			// TODO: need to figure out how to test this
-			float f13 = pShape[modelblockrenderer$adjacencyinfo.vert0Weights[0].shape] * pShape[modelblockrenderer$adjacencyinfo.vert0Weights[1].shape];
-			float f14 = pShape[modelblockrenderer$adjacencyinfo.vert0Weights[2].shape] * pShape[modelblockrenderer$adjacencyinfo.vert0Weights[3].shape];
-			float f15 = pShape[modelblockrenderer$adjacencyinfo.vert0Weights[4].shape] * pShape[modelblockrenderer$adjacencyinfo.vert0Weights[5].shape];
-			float f16 = pShape[modelblockrenderer$adjacencyinfo.vert0Weights[6].shape] * pShape[modelblockrenderer$adjacencyinfo.vert0Weights[7].shape];
-			float f17 = pShape[modelblockrenderer$adjacencyinfo.vert1Weights[0].shape] * pShape[modelblockrenderer$adjacencyinfo.vert1Weights[1].shape];
-			float f18 = pShape[modelblockrenderer$adjacencyinfo.vert1Weights[2].shape] * pShape[modelblockrenderer$adjacencyinfo.vert1Weights[3].shape];
-			float f19 = pShape[modelblockrenderer$adjacencyinfo.vert1Weights[4].shape] * pShape[modelblockrenderer$adjacencyinfo.vert1Weights[5].shape];
-			float f20 = pShape[modelblockrenderer$adjacencyinfo.vert1Weights[6].shape] * pShape[modelblockrenderer$adjacencyinfo.vert1Weights[7].shape];
-			float f21 = pShape[modelblockrenderer$adjacencyinfo.vert2Weights[0].shape] * pShape[modelblockrenderer$adjacencyinfo.vert2Weights[1].shape];
-			float f22 = pShape[modelblockrenderer$adjacencyinfo.vert2Weights[2].shape] * pShape[modelblockrenderer$adjacencyinfo.vert2Weights[3].shape];
-			float f23 = pShape[modelblockrenderer$adjacencyinfo.vert2Weights[4].shape] * pShape[modelblockrenderer$adjacencyinfo.vert2Weights[5].shape];
-			float f24 = pShape[modelblockrenderer$adjacencyinfo.vert2Weights[6].shape] * pShape[modelblockrenderer$adjacencyinfo.vert2Weights[7].shape];
-			float f25 = pShape[modelblockrenderer$adjacencyinfo.vert3Weights[0].shape] * pShape[modelblockrenderer$adjacencyinfo.vert3Weights[1].shape];
-			float f26 = pShape[modelblockrenderer$adjacencyinfo.vert3Weights[2].shape] * pShape[modelblockrenderer$adjacencyinfo.vert3Weights[3].shape];
-			float f27 = pShape[modelblockrenderer$adjacencyinfo.vert3Weights[4].shape] * pShape[modelblockrenderer$adjacencyinfo.vert3Weights[5].shape];
-			float f28 = pShape[modelblockrenderer$adjacencyinfo.vert3Weights[6].shape] * pShape[modelblockrenderer$adjacencyinfo.vert3Weights[7].shape];
-			Color i2 = this.maxBlend(self, corner3Light, corner0Light, trueCorner1, something);
-			Color j2 = this.maxBlend(self, corner2Light, corner0Light, trueColor0, something);
-			Color k2 = this.maxBlend(self, corner2Light, corner1Light, trueCorner2, something);
-			Color l2 = this.maxBlend(self, corner3Light, corner1Light, trueCorner3, something);
-			this.colors[modelblockrenderer$ambientvertexremap.vert0] = this.blend(i2, j2, k2, l2, f13, f14, f15, f16);
-			this.colors[modelblockrenderer$ambientvertexremap.vert1] = this.blend(i2, j2, k2, l2, f17, f18, f19, f20);
-			this.colors[modelblockrenderer$ambientvertexremap.vert2] = this.blend(i2, j2, k2, l2, f21, f22, f23, f24);
-			this.colors[modelblockrenderer$ambientvertexremap.vert3] = this.blend(i2, j2, k2, l2, f25, f26, f27, f28);
-		} else {
-			// this I understand pretty well
-			this.colors[modelblockrenderer$ambientvertexremap.vert0] = this.maxBlend(self, corner3Light, corner0Light, trueCorner1, something);
-			this.colors[modelblockrenderer$ambientvertexremap.vert1] = this.maxBlend(self, corner2Light, corner0Light, trueColor0, something);
-			this.colors[modelblockrenderer$ambientvertexremap.vert2] = this.maxBlend(self, corner2Light, corner1Light, trueCorner2, something);
-			this.colors[modelblockrenderer$ambientvertexremap.vert3] = this.maxBlend(self, corner3Light, corner1Light, trueCorner3, something);
-		}
-		for (int i = 0; i < colors.length; i++) {
-			Color color = colors[i];
-			if (color.r() == 0 && color.g() == 0 && color.b() == 0)
-				colors[i] = null;
+			
+			if (colors[i] == null || colors[i].equals(none)) {
+				colors[i] = new Color(fallback.r() / 2, fallback.g() / 2, fallback.b() / 2);
+			}
 		}
 	}
 	

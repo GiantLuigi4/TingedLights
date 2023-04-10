@@ -71,19 +71,21 @@ public class LevelLightEngineMixin implements ColoredLightEngine {
 	@Inject(at = @At("HEAD"), method = "updateSectionStatus")
 	public void preUpdateSection(SectionPos pPos, boolean pIsEmpty, CallbackInfo ci) {
 		if (enable) {
-			for (BlockLightEngine value : engines.values()) value.updateSectionStatus(pPos, pIsEmpty);
 			if (pIsEmpty) enabledSections.remove(pPos);
 			else enabledSections.add(pPos);
+			
+			for (BlockLightEngine value : engines.values()) value.updateSectionStatus(pPos, pIsEmpty);
 		}
 	}
 	
 	@Inject(at = @At("HEAD"), method = "enableLightSources")
 	public void postEnableLights(ChunkPos p_75812_, boolean p_75813_, CallbackInfo ci) {
 		if (enable) {
-			for (Map.Entry<Light, BlockLightEngine> lightBlockLightEngineEntry : engines.entrySet())
-				lightBlockLightEngineEntry.getValue().enableLightSources(p_75812_, p_75813_);
 			if (p_75813_) enabledLights.add(p_75812_);
 			else enabledLights.remove(p_75812_);
+			
+			for (Map.Entry<Light, BlockLightEngine> lightBlockLightEngineEntry : engines.entrySet())
+				lightBlockLightEngineEntry.getValue().enableLightSources(p_75812_, p_75813_);
 		}
 	}
 	

@@ -177,6 +177,9 @@ dependencies {
         }
     }
 
+    implementation fg.deobf("curse.maven:radon-596879:3707321")
+//    implementation fg.deobf("curse.maven:starlight-526854:3706539")
+
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 

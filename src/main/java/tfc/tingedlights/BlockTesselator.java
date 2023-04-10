@@ -72,7 +72,7 @@ public class BlockTesselator {
 			}
 			if (!hasNonNull) {
 				extensions.setColorDone(false);
-				extensions.setDefault(new Color(0,0,0));
+				extensions.setDefault(new Color(0, 0, 0));
 				pConsumer.putBulkData(pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, 1, lightmap, pPackedOverlay, true);
 				extensions.setColorDone(false);
 				return;
@@ -84,7 +84,7 @@ public class BlockTesselator {
 					new float[]{colors[1].r(), colors[1].g(), colors[1].b()},
 					new float[]{colors[2].r(), colors[2].g(), colors[2].b()},
 					new float[]{colors[3].r(), colors[3].g(), colors[3].b()},
-			});
+			}, face.dimmed);
 			extensions.setColorDone(false);
 		} else {
 			BlockPos lightProbePos = posThreadLocal.get();
@@ -105,11 +105,13 @@ public class BlockTesselator {
 		}
 	}
 	
+	protected static final boolean[] defaultDimmed = new boolean[4];
+	
 	protected static void putBulkData(VertexConsumer pConsumer, PoseStack.Pose pPoseEntry, BakedQuad pQuad, float[] pColorMuls, float pRed, float pGreen, float pBlue, int[] pCombinedLights, int pCombinedOverlay, boolean pMulColor, float[] pColor) {
-		putBulkData(pConsumer, pPoseEntry, pQuad, pColorMuls, pRed, pGreen, pBlue, pCombinedLights, pCombinedOverlay, pMulColor, new float[][]{pColor, pColor, pColor, pColor});
+		putBulkData(pConsumer, pPoseEntry, pQuad, pColorMuls, pRed, pGreen, pBlue, pCombinedLights, pCombinedOverlay, pMulColor, new float[][]{pColor, pColor, pColor, pColor}, defaultDimmed);
 	}
 	
-	protected static void putBulkData(VertexConsumer pConsumer, PoseStack.Pose pPoseEntry, BakedQuad pQuad, float[] pColorMuls, float pRed, float pGreen, float pBlue, int[] pCombinedLights, int pCombinedOverlay, boolean pMulColor, float[][] pColor) {
+	protected static void putBulkData(VertexConsumer pConsumer, PoseStack.Pose pPoseEntry, BakedQuad pQuad, float[] pColorMuls, float pRed, float pGreen, float pBlue, int[] pCombinedLights, int pCombinedOverlay, boolean pMulColor, float[][] pColor, boolean[] pDimmed) {
 		float[] afloat = new float[]{pColorMuls[0], pColorMuls[1], pColorMuls[2], pColorMuls[3]};
 		int[] aint1 = pQuad.getVertices();
 		Vec3i vec3i = pQuad.getDirection().getNormal();
@@ -120,17 +122,37 @@ public class BlockTesselator {
 		MemoryStack memorystack = MemoryStack.stackPush();
 		
 		int firstVertex = 0;
-		float maxV = 0;
 		
-		for (int k = 0; k < j; ++k) {
-			float[] colors = pColor[k];
-			float v = Math.max(colors[0], Math.max(colors[1], colors[2]));
-			if (v > maxV) {
-				maxV = v;
-				firstVertex = k + 1;
+		// vertex sort: used to avoid jagged edges
+		if (Options.sortVertices) {
+			int countDimmed = 0;
+			for (boolean b : pDimmed) if (b) countDimmed++;
+			
+			if (countDimmed == 3) {
+				if (!pDimmed[0]) {
+					firstVertex = 0;
+				} else if (!pDimmed[1]) {
+					firstVertex = 1;
+				} else if (!pDimmed[2]) {
+					firstVertex = 0;
+				} else if (!pDimmed[3]) {
+					firstVertex = 1;
+				}
+			} else {
+				float maxV = 0;
+				
+				// set the leading vertex to the brightest vertex to avoid jagged edges
+				for (int k = 0; k < j; ++k) {
+					float[] colors = pColor[k];
+					float v = Math.max(colors[0], Math.max(colors[1], colors[2]));
+					if (v > maxV) {
+						maxV = v;
+						firstVertex = k + 1;
+					}
+				}
 			}
+			if (firstVertex >= j) firstVertex -= j;
 		}
-		if (firstVertex >= j) firstVertex -= j;
 		
 		try {
 			ByteBuffer bytebuffer = memorystack.malloc(DefaultVertexFormat.BLOCK.getVertexSize());

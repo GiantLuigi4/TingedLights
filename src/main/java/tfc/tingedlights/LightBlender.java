@@ -1,7 +1,7 @@
 package tfc.tingedlights;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import tfc.tingedlights.data.Color;
@@ -43,8 +43,13 @@ public class LightBlender {
 		);
 	}
 	
-	public static Color blend(Vec3 pos, LightManager engine, Level level) {
-		Color srcColor = engine.getColor(new BlockPos(pos));
+	public static Color blend(Vec3 pos, LightManager engine, BlockAndTintGetter level) {
+		BlockPos bp = new BlockPos(pos);
+		BlockState state = level.getBlockState(bp);
+		int lb = state.getLightBlock(level, bp);
+		if (lb == 15) return defaultColor;
+		
+		Color srcColor = engine.getColor(bp);
 		Color bx = srcColor;
 		Color by = srcColor;
 		Color bz = srcColor;
@@ -91,7 +96,7 @@ public class LightBlender {
 		return average(srcColor, bx, by, bz, dx, dy, dz);
 	}
 	
-	public static Color getLight(Level level, LightManager manager, BlockPos pos, Color defaultColor) {
+	public static Color getLight(BlockAndTintGetter level, LightManager manager, BlockPos pos, Color defaultColor) {
 		BlockState state = level.getBlockState(pos);
 		int lb = state.getLightBlock(level, pos);
 		if (lb == 15) return defaultColor;
