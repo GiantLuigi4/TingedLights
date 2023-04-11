@@ -1,0 +1,13 @@
+{
+  "types": {
+    "kelp": {
+      "color": [0, 0, 255]
+    }
+  },
+  "lights": {
+    "minecraft:kelp": {
+      "type": "kelp",
+      "brightness": 10
+    }
+  }
+}
