@@ -19,9 +19,9 @@ In the future, when I have a more custom lighting engine, This would also allow 
 
 ## Finding a good light color?
 In my experience, good light colors come from
-   A) a highlight color for a typical block (such as amethyst)
-   B) a midtone for a moody block (such as lava)
-   C) a modified highlight for a vibetant block (such as glowstone, which uses a highlight but with the blue value dropped to 10, to get a very defined gold)
+   - a highlight color for a typical block (such as amethyst)
+   - a midtone for a moody block (such as lava)
+   - a modified highlight for a vibetant block (such as glowstone, which uses a highlight but with the blue value dropped to 10, to get a very defined gold)
 
 ## So what else does this mod do?
 The mod also changes some stuff about block rendering, implementing vertex sorting, for sake of having smooth lighting look more smooth, and also having amambient occlusion look a bit more consistent
