@@ -139,12 +139,17 @@ public class BlockTesselator {
 		switch (countDimmed) {
 			case 1 -> {
 				if (VertexSortingOptions.SortingOptions.sortOutside) {
-					if (VertexSortingOptions.SortingOptions.boxOutside) {
-						if (pDimmed[1]) firstVertex = 1;
-						else if (pDimmed[3]) firstVertex = 1;
-					} else {
-						if (pDimmed[0]) firstVertex = 1;
-						else if (pDimmed[2]) firstVertex = 1;
+					switch (VertexSortingOptions.SortingOptions.boxOutside) {
+						case 0 -> {
+							if (pDimmed[1]) firstVertex = 1;
+							else if (pDimmed[3]) firstVertex = 1;
+						}
+						case 1 -> {
+							if (pDimmed[0]) firstVertex = 1;
+							else if (pDimmed[2]) firstVertex = 1;
+						}
+						case 2 -> {
+						}
 					}
 					skipVertSort = true;
 				}

@@ -9,6 +9,7 @@ import tfc.tingedlights.utils.config.annoconfg.annotation.format.Name;
 import tfc.tingedlights.utils.config.annoconfg.annotation.format.Skip;
 import tfc.tingedlights.utils.config.annoconfg.annotation.value.Default;
 import tfc.tingedlights.utils.config.annoconfg.annotation.value.FloatRange;
+import tfc.tingedlights.utils.config.annoconfg.annotation.value.IntRange;
 
 @tfc.tingedlights.utils.config.annoconfg.annotation.format.Config(type = ModConfig.Type.CLIENT)
 public class Config {
@@ -53,6 +54,7 @@ public class Config {
 		@FloatRange(minV = 0, maxV = 1)
 		public static float aoIntensity = 0.125f;
 		
+		@Comment("For vanilla-style AO, turn everything under this category to false")
 		@CFGSegment("Vertex Sorting")
 		public static class VertexSortingOptions {
 			@Name("SortVertices")
@@ -81,9 +83,13 @@ public class Config {
 				public static boolean sortInner = true;
 				
 				@Name("BoxedOutside")
-				@Comment("Boxes off AO when there's an outside corner")
-				@Default(valueBoolean = true)
-				public static boolean boxOutside = true;
+				@Comment({
+						"Outside corner AO style",
+						"0=boxed, 1=sloped, 2=vanilla-esk"
+				})
+				@Default(valueI = 2)
+				@IntRange(minV = 0, maxV = 2)
+				public static int boxOutside = 2;
 				
 				@Name("BoxedDual")
 				@Comment("Boxes off AO when there's two perpendicular corners")
