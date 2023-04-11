@@ -3,7 +3,7 @@ package tfc.tingedlights.utils.preprocessor;
 import com.mojang.blaze3d.preprocessor.GlslPreprocessor;
 import com.mojang.blaze3d.shaders.Program;
 import org.jetbrains.annotations.Nullable;
-import tfc.tingedlights.Options;
+import tfc.tingedlights.utils.config.Config;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -71,7 +71,7 @@ public class DynamicLightPreprocessor extends GlslPreprocessor {
 			builder.append(s).append("\n");
 		}
 		
-		if (Options.dumpShaders) {
+		if (Config.GeneralOptions.dumpShaders) {
 			try {
 				String typeStr = type.getExtension();
 				

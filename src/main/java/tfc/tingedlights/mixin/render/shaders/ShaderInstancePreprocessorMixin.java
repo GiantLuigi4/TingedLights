@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import tfc.tingedlights.Options;
+import tfc.tingedlights.utils.config.Config;
 import tfc.tingedlights.utils.preprocessor.DynamicLightPreprocessor;
 
 import java.io.File;
@@ -69,7 +69,7 @@ public class ShaderInstancePreprocessorMixin {
 			out += sub.substring(1, targetMethod);
 			out += "    #endif\n" +
 					"}";
-			if (Options.dynamicLights) {
+			if (Config.GeneralOptions.dynamicLights) {
 				out += dynamicLightMethod;
 			}
 			
@@ -83,8 +83,8 @@ public class ShaderInstancePreprocessorMixin {
 				}
 			}
 			
-			if (Options.dumpShaders) {
-				if (!Options.wroteLightShader) {
+			if (Config.GeneralOptions.dumpShaders) {
+				if (!Config.wroteLightShader) {
 					try {
 						File file = new File("shader_dump/tinged_lights/include/light.glsl");
 						if (!file.exists()) {
@@ -95,7 +95,7 @@ public class ShaderInstancePreprocessorMixin {
 						outputStream.write(output.toString().getBytes(StandardCharsets.UTF_8));
 						outputStream.flush();
 						outputStream.close();
-						Options.wroteLightShader = true;
+						Config.wroteLightShader = true;
 					} catch (Throwable ignored) {
 					}
 				}

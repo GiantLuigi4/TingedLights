@@ -17,9 +17,12 @@ import org.lwjgl.system.MemoryStack;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.LightManager;
 import tfc.tingedlights.itf.VertexBufferConsumerExtensions;
+import tfc.tingedlights.utils.config.Config;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+
+import static tfc.tingedlights.utils.config.Config.TesselationOptions.VertexSortingOptions;
 
 public class BlockTesselator {
 	protected static final Color defaultColor = new Color(0, 0, 0);
@@ -123,36 +126,70 @@ public class BlockTesselator {
 		
 		int firstVertex = 0;
 		
-		// vertex sort: used to avoid jagged edges
-		if (Options.sortVertices) {
-			int countDimmed = 0;
-			for (boolean b : pDimmed) if (b) countDimmed++;
-			
-			if (countDimmed == 3) {
-				if (!pDimmed[0]) {
-					firstVertex = 0;
-				} else if (!pDimmed[1]) {
-					firstVertex = 1;
-				} else if (!pDimmed[2]) {
-					firstVertex = 0;
-				} else if (!pDimmed[3]) {
-					firstVertex = 1;
+		int countDimmed = 0;
+		if (VertexSortingOptions.SortingOptions.sortInner || VertexSortingOptions.SortingOptions.sortOutside || VertexSortingOptions.SortingOptions.sortPerpendicular) {
+			for (boolean b : pDimmed) {
+				if (b) {
+					countDimmed++;
 				}
-			} else {
-				float maxV = 0;
-				
-				// set the leading vertex to the brightest vertex to avoid jagged edges
-				for (int k = 0; k < j; ++k) {
-					float[] colors = pColor[k];
-					float v = Math.max(colors[0], Math.max(colors[1], colors[2]));
-					if (v > maxV) {
-						maxV = v;
-						firstVertex = k + 1;
+			}
+		}
+		
+		boolean skipVertSort = false;
+		switch (countDimmed) {
+			case 1 -> {
+				if (VertexSortingOptions.SortingOptions.sortOutside) {
+					if (VertexSortingOptions.SortingOptions.boxOutside) {
+						if (pDimmed[1]) firstVertex = 1;
+						else if (pDimmed[3]) firstVertex = 1;
+					} else {
+						if (pDimmed[0]) firstVertex = 1;
+						else if (pDimmed[2]) firstVertex = 1;
+					}
+					skipVertSort = true;
+				}
+			}
+			case 2 -> {
+				if (VertexSortingOptions.SortingOptions.sortPerpendicular) {
+					boolean perpen = pDimmed[0] == pDimmed[2];
+					
+					if (perpen) {
+						if (VertexSortingOptions.SortingOptions.boxPerpendicular) if (pDimmed[1]) firstVertex = 1;
+						else if (pDimmed[0]) firstVertex = 1;
+						skipVertSort = true;
 					}
 				}
 			}
-			if (firstVertex >= j) firstVertex -= j;
+			case 3 -> {
+				if (VertexSortingOptions.SortingOptions.sortInner) {
+					if (VertexSortingOptions.SortingOptions.boxedInner) {
+						if (!pDimmed[1]) firstVertex = 1;
+						else if (!pDimmed[3]) firstVertex = 1;
+						skipVertSort = true;
+					} else {
+						if (!pDimmed[0]) firstVertex = 1;
+						else if (!pDimmed[2]) firstVertex = 1;
+						skipVertSort = true;
+					}
+				}
+			}
 		}
+		
+		if (!skipVertSort && Config.TesselationOptions.VertexSortingOptions.sortVertices) {
+			float maxV = 0;
+			
+			// set the leading vertex to the brightest vertex to avoid jagged edges
+			for (int k = 0; k < j; ++k) {
+				float[] colors = pColor[k];
+				float v = Math.max(colors[0], Math.max(colors[1], colors[2]));
+				if (v > maxV) {
+					maxV = v;
+					firstVertex = k + 1;
+				}
+			}
+		}
+		
+		if (firstVertex >= j) firstVertex -= j;
 		
 		try {
 			ByteBuffer bytebuffer = memorystack.malloc(DefaultVertexFormat.BLOCK.getVertexSize());

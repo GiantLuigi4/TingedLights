@@ -1,7 +1,7 @@
 package tfc.tingedlights.utils.preprocessor;
 
 import com.mojang.blaze3d.shaders.Program;
-import tfc.tingedlights.Options;
+import tfc.tingedlights.utils.config.Config;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -33,7 +33,7 @@ public class ParticlePreprocessor {
 			builder.append(s).append("\n");
 		}
 		
-		if (Options.dumpShaders) {
+		if (Config.GeneralOptions.dumpShaders) {
 			try {
 				String typeStr = type.getExtension();
 				

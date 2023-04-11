@@ -14,9 +14,9 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import tfc.tingedlights.Options;
 import tfc.tingedlights.api.DynamicLightApi;
 import tfc.tingedlights.data.Color;
+import tfc.tingedlights.utils.config.Config;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -46,7 +46,7 @@ public abstract class ShaderInstanceMixin {
 	
 	@Inject(at = @At("TAIL"), method = "apply")
 	public void preApply(CallbackInfo ci) {
-		if (Options.dynamicLights) {
+		if (Config.GeneralOptions.dynamicLights) {
 			GlStateManager._glUseProgram(programId);
 			for (int i = 0; i < 15; i++) {
 				Uniform u = getOrMakeUniform("TingedLights_lightColors[" + i + "]", 6, 3);

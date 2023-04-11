@@ -12,9 +12,9 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import tfc.tingedlights.Options;
 import tfc.tingedlights.api.DynamicLightApi;
 import tfc.tingedlights.util.OnThread;
+import tfc.tingedlights.utils.config.Config;
 
 import javax.annotation.Nullable;
 
@@ -25,11 +25,7 @@ public class LevelRendererMixin {
 	// I would hope this doesn't get overwritten
 	@Inject(at = @At("HEAD"), method = "renderLevel")
 	public void preRenderLevel(PoseStack pPoseStack, float pPartialTick, long pFinishNanoTime, boolean pRenderBlockOutline, Camera pCamera, GameRenderer pGameRenderer, LightTexture pLightTexture, Matrix4f pProjectionMatrix, CallbackInfo ci) {
-//		if (level instanceof LevelWithColoredLightSupport lightSupport) {
-//			LightManager manager = lightSupport.getManager();
-//			manager.tick();
-//		}
-		if (Options.dynamicLights)
+		if (Config.GeneralOptions.dynamicLights)
 			DynamicLightApi.tick();
 		OnThread.run();
 	}

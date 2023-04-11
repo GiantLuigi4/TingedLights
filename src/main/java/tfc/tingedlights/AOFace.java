@@ -11,6 +11,7 @@ import net.minecraft.world.phys.Vec3;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.LightManager;
 import tfc.tingedlights.util.BetterAdjacencyInfo;
+import tfc.tingedlights.utils.config.Config;
 
 import java.util.BitSet;
 
@@ -30,7 +31,8 @@ public class AOFace {
 		BlockPos blockpos = pShapeFlags.get(0) ? pPos.relative(pDirection) : pPos;
 		LightManager manager = (LightManager) pLevel.getLightEngine();
 		
-		BetterAdjacencyInfo adjacency = new BetterAdjacencyInfo(ModelBlockRenderer.AdjacencyInfo.fromFacing(pDirection), pDirection);
+		ModelBlockRenderer.AdjacencyInfo adjacencyInfo = ModelBlockRenderer.AdjacencyInfo.fromFacing(pDirection);
+		BetterAdjacencyInfo adjacency = new BetterAdjacencyInfo(adjacencyInfo, pDirection);
 		
 		Vec3[] vertices = new Vec3[4];
 		for (int i = 0; i < 4; i++) {
@@ -49,109 +51,70 @@ public class AOFace {
 		BlockPos.MutableBlockPos posMut = new BlockPos.MutableBlockPos();
 		BlockPos.MutableBlockPos offset = new BlockPos.MutableBlockPos();
 		
+		final int[][] MAPPINGS = new int[][]{
+				new int[]{0, 3},
+				new int[]{0, 2},
+				new int[]{1, 2},
+				new int[]{1, 3}
+		};
+		
 		colors = new Color[4];
 		dimmed = new boolean[4];
 		for (int i = 0; i < vertices.length; i++) {
-			colors[i] = LightBlender.blend(
-					vertices[i]
-							.subtract(0.5, 0.5, 0.5)
-							.multiply(
-									.1 * Math.abs(pDirection.getStepX()) + 1,
-									.1 * Math.abs(pDirection.getStepY()) + 1,
-									.1 * Math.abs(pDirection.getStepZ()) + 1
-							)
-							.add(0.5, 0.5, 0.5)
-							.add(pPos.getX(), pPos.getY(), pPos.getZ())
-					,
-					manager, pLevel
-			);
-			
-			BlockState state;
 			int lb;
 			
-			// TODO: fix corners
-			if (i == 0) {
-				offset.set(0, 0, 0).move(adjacency.edges[0]);
-				posMut.set(blockpos).move(offset);
-				state = pLevel.getBlockState(posMut);
-				lb = lightObstruction(state, pLevel, posMut);
-				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
-				
-				offset.set(0, 0, 0).move(adjacency.edges[3]);
-				posMut.set(blockpos).move(offset);
-				state = pLevel.getBlockState(posMut);
-				lb = lightObstruction(state, pLevel, posMut);
-				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
-				
-				offset.set(0, 0, 0).move(adjacency.edges[3]).move(adjacency.edges[0]);
-				posMut.set(blockpos).move(offset);
-				state = pLevel.getBlockState(posMut);
-				lb = lightObstruction(state, pLevel, posMut);
-				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
-			}
-			if (i == 1) {
-				offset.set(0, 0, 0).move(adjacency.edges[0]);
-				
-				posMut.set(blockpos).move(offset);
-				state = pLevel.getBlockState(posMut);
-				lb = lightObstruction(state, pLevel, posMut);
-				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
-				
-				offset.set(0, 0, 0).move(adjacency.edges[2]);
-				posMut.set(blockpos).move(offset);
-				state = pLevel.getBlockState(posMut);
-				lb = lightObstruction(state, pLevel, posMut);
-				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
-				
-				offset.set(0, 0, 0).move(adjacency.edges[2]).move(adjacency.edges[0]);
-				posMut.set(blockpos).move(offset);
-				state = pLevel.getBlockState(posMut);
-				lb = lightObstruction(state, pLevel, posMut);
-				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
-			}
-			if (i == 2) {
-				offset.set(0, 0, 0).move(adjacency.edges[1]);
-				
-				posMut.set(blockpos).move(offset);
-				state = pLevel.getBlockState(posMut);
-				lb = lightObstruction(state, pLevel, posMut);
-				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
-				
-				offset.set(0, 0, 0).move(adjacency.edges[2]);
-				posMut.set(blockpos).move(offset);
-				state = pLevel.getBlockState(posMut);
-				lb = lightObstruction(state, pLevel, posMut);
-				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
-				
-				offset.set(0, 0, 0).move(adjacency.edges[2]).move(adjacency.edges[1]);
-				posMut.set(blockpos).move(offset);
-				state = pLevel.getBlockState(posMut);
-				lb = lightObstruction(state, pLevel, posMut);
-				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
-			}
-			if (i == 3) {
-				offset.set(0, 0, 0).move(adjacency.edges[1]);
-				
-				posMut.set(blockpos).move(offset);
-				state = pLevel.getBlockState(posMut);
-				lb = lightObstruction(state, pLevel, posMut);
-				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
-				
-				offset.set(0, 0, 0).move(adjacency.edges[3]);
-				posMut.set(blockpos).move(offset);
-				state = pLevel.getBlockState(posMut);
-				lb = lightObstruction(state, pLevel, posMut);
-				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
-				
-				offset.set(0, 0, 0).move(adjacency.edges[3]).move(adjacency.edges[1]);
-				posMut.set(blockpos).move(offset);
-				state = pLevel.getBlockState(posMut);
-				lb = lightObstruction(state, pLevel, posMut);
-				if (lb == 15) {colors[i] = none; dimmed[i] = true;}
-			}
+			int el = 0;
+			if (i == 0) el = 0;
+			if (i == 1) el = 1;
+			if (i == 2) el = 2;
+			if (i == 3) el = 3;
 			
-			if (colors[i] == null || colors[i].equals(none)) {
-				colors[i] = new Color(fallback.r() / 2, fallback.g() / 2, fallback.b() / 2);
+			colors[i] = fallback;
+			
+			BlockState state;
+			
+			// smooth light
+			posMut.setWithOffset(blockpos, adjacency.edges[MAPPINGS[i][0]]);
+			Color d0 = getLightColor(manager, state = pLevel.getBlockState(posMut), pLevel, posMut);
+			if (state.isViewBlocking(pLevel, posMut)) d0 = fallback;
+			
+			// ao
+			lb = lightObstruction(state, pLevel, posMut);
+			if (lb == 15) dimmed[i] = true;
+			
+			// smooth light
+			posMut.setWithOffset(blockpos, adjacency.edges[MAPPINGS[i][1]]);
+			Color d1 = getLightColor(manager, state = pLevel.getBlockState(posMut), pLevel, posMut);
+			if (state.isViewBlocking(pLevel, posMut)) d1 = fallback;
+			
+			// ao
+			lb = lightObstruction(state, pLevel, posMut);
+			if (lb == 15) dimmed[i] = true;
+			
+			// smooth light
+			posMut.setWithOffset(blockpos, adjacency.edges[MAPPINGS[i][0]]).move(adjacency.edges[MAPPINGS[i][1]]);
+			Color d2 = getLightColor(manager, state = pLevel.getBlockState(posMut), pLevel, posMut);
+			if (state.isViewBlocking(pLevel, posMut)) d2 = fallback;
+			
+			// ao
+			lb = lightObstruction(state, pLevel, posMut);
+			if (lb == 15) dimmed[i] = true;
+			
+			colors[i] = new Color(
+					Math.max(fallback.r(), Math.max(d0.r(), Math.max(d1.r(), d2.r()))),
+					Math.max(fallback.g(), Math.max(d0.g(), Math.max(d1.g(), d2.g()))),
+					Math.max(fallback.b(), Math.max(d0.b(), Math.max(d1.b(), d2.b())))
+			);
+			
+			if (dimmed[i]) {
+				float intensity = (1 - Config.TesselationOptions.aoIntensity);
+				if (Config.TesselationOptions.aoIntensity != 0) {
+					colors[i] = new Color(
+							colors[i].r() * intensity,
+							colors[i].g() * intensity,
+							colors[i].b() * intensity
+					);
+				}
 			}
 		}
 	}

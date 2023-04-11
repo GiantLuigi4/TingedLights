@@ -102,4 +102,75 @@ public class LightBlender {
 		if (lb == 15) return defaultColor;
 		return manager.getColor(pos);
 	}
+	
+	public static Color blend(Vec3 pos, LightManager engine, BlockAndTintGetter level, BlockPos exclude) {
+		BlockPos bp = new BlockPos(pos);
+		BlockState state = level.getBlockState(bp);
+		int lb = state.getLightBlock(level, bp);
+		if (lb == 15) return defaultColor;
+		
+		Color srcColor = engine.getColor(bp);
+		Color bx = srcColor;
+		Color by = srcColor;
+		Color bz = srcColor;
+		double dx = Math.abs(pos.x - ((int) pos.x));
+		if (pos.x < 0) dx = 1 - dx;
+		double dy = Math.abs(pos.y - ((int) pos.y));
+		if (pos.y < 0) dy = 1 - dy;
+		double dz = Math.abs(pos.z - ((int) pos.z));
+		if (pos.z < 0) dz = 1 - dz;
+		// TODO: deal with light blocking blocks
+		if (dx > 0.5) {
+			BlockPos pos1 = new BlockPos(pos.x + 1, pos.y, pos.z);
+			if (!pos1.equals(exclude)) {
+				bx = getLight(level, engine, pos1, srcColor);
+				dx -= 0.5;
+				dx *= 2;
+			}
+		} else if (dx < 0.5) {
+			BlockPos pos1 = new BlockPos(pos.x - 1, pos.y, pos.z);
+			if (!pos1.equals(exclude)) {
+				bx = getLight(level, engine, pos1, srcColor);
+				dx *= 2;
+				dx = 1 - dx;
+			}
+		} else {
+			dx = 0;
+		}
+		if (dy > 0.5) {
+			BlockPos pos1 = new BlockPos(pos.x, pos.y + 1, pos.z);
+			if (!pos1.equals(exclude)) {
+				by = getLight(level, engine, pos1, srcColor);
+				dy -= 0.5;
+				dy *= 2;
+			}
+		} else if (dy < 0.5) {
+			BlockPos pos1 = new BlockPos(pos.x, pos.y - 1, pos.z);
+			if (!pos1.equals(exclude)) {
+				by = getLight(level, engine, pos1, srcColor);
+				dy *= 2;
+				dy = 1 - dy;
+			}
+		} else {
+			dy = 0;
+		}
+		if (dz > 0.5) {
+			BlockPos pos1 = new BlockPos(pos.x, pos.y, pos.z + 1);
+			if (!pos1.equals(exclude)) {
+				bz = getLight(level, engine, pos1, srcColor);
+				dz -= 0.5;
+				dz *= 2;
+			}
+		} else if (dz < 0.5) {
+			BlockPos pos1 = new BlockPos(pos.x, pos.y, pos.z - 1);
+			if (!pos1.equals(exclude)) {
+				bz = getLight(level, engine, pos1, srcColor);
+				dz *= 2;
+				dz = 1 - dz;
+			}
+		} else {
+			dz = 0;
+		}
+		return average(srcColor, bx, by, bz, dx, dy, dz);
+	}
 }
