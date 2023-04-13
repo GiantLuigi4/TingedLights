@@ -2,7 +2,6 @@ package tfc.tingedlights.util;
 
 import net.minecraftforge.coremod.api.ASMAPI;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
@@ -10,8 +9,6 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import tfc.tingedlights.util.asm.HookParser;
 import tfc.tingedlights.util.asm.HookPatcher;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
@@ -208,17 +205,17 @@ public class MixinConnector implements IMixinConfigPlugin {
 					method.instructions.insert(list1);
 				}
 			}
-			try {
-				FileOutputStream outputStream = new FileOutputStream(targetClass.name.substring(targetClass.name.lastIndexOf("/") + 1) + "-post.class");
-				ClassWriter writer = new ClassWriter(0);
-				targetClass.accept(writer);
-				outputStream.write(writer.toByteArray());
-				outputStream.flush();
-				outputStream.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.out.println("Failed to transform class " + targetClassName + " with mixin " + mixinClassName);
-			}
+//			try {
+//				FileOutputStream outputStream = new FileOutputStream(targetClass.name.substring(targetClass.name.lastIndexOf("/") + 1) + "-post.class");
+//				ClassWriter writer = new ClassWriter(0);
+//				targetClass.accept(writer);
+//				outputStream.write(writer.toByteArray());
+//				outputStream.flush();
+//				outputStream.close();
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//				System.out.println("Failed to transform class " + targetClassName + " with mixin " + mixinClassName);
+//			}
 		}
 	}
 }
