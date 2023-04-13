@@ -4,13 +4,32 @@ import ca.spottedleaf.starlight.common.chunk.ExtendedChunk;
 import ca.spottedleaf.starlight.common.light.SWMRNibbleArray;
 import ca.spottedleaf.starlight.common.light.StarLightInterface;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import tfc.tingedlights.util.asm.annotation.Hook;
+import tfc.tingedlights.util.asm.annotation.MethodRedir;
+import tfc.tingedlights.util.asm.annotation.RemoveMethods;
+import tfc.tingedlights.util.asm.annotation.template.AnnotationTemplate;
+import tfc.tingedlights.util.asm.annotation.template.MethodTarget;
 import tfc.tingedlights.util.starlight.OutOfLineChunkExtensionAccessor;
 
-@Mixin(value = StarLightInterface.class, remap = false)
+@Mixin(value = StarLightInterface.class)
+@Hook(target = StarLightInterface.class)
+@RemoveMethods(
+		targets = @MethodTarget(
+				value = {"preGetLightValue"},
+				annotations = @AnnotationTemplate(
+						type = "org.spongepowered.asm.mixin.transformer.meta.MixinMerged",
+						values = {
+								"mixin=tfc.tingedlights.mixin.backend.starlight.StarLightInterfaceMixin"
+						}
+				),
+				matchAllAnnotations = false
+		)
+)
 public class StarLightInterfaceMixin implements OutOfLineChunkExtensionAccessor {
-	@Redirect(method = "getBlockLightValue", at = @At(value = "INVOKE", target = "Lca/spottedleaf/starlight/common/chunk/ExtendedChunk;getBlockNibbles()[Lca/spottedleaf/starlight/common/light/SWMRNibbleArray;"))
+	@MethodRedir(
+			exclude = @MethodTarget("TingedLights$getBlockNibbles"),
+			redirTarget = "Lca/spottedleaf/starlight/common/chunk/ExtendedChunk;getBlockNibbles"
+	)
 	public SWMRNibbleArray[] preGetLightValue(ExtendedChunk instance) {
 		return TingedLights$getBlockNibbles(instance);
 	}

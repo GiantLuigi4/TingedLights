@@ -1,11 +1,17 @@
 package tfc.tingedlights.util;
 
 import net.minecraftforge.coremod.api.ASMAPI;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+import tfc.tingedlights.util.asm.HookParser;
+import tfc.tingedlights.util.asm.HookPatcher;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
@@ -125,8 +131,36 @@ public class MixinConnector implements IMixinConfigPlugin {
 		return out;
 	}
 	
+	protected static final String updateSectionStats = "m_6191_";
+	protected static final String enableLightSources = "m_141940_";
+	protected static final String runUpdates = "m_142528_";
+	
+	protected static ClassNode getNode(String name) {
+		ClassLoader loader = MixinConnector.class.getClassLoader();
+		try {
+			InputStream stream = loader.getResourceAsStream(name.replace(".", "/") + ".class");
+			byte[] data = stream.readAllBytes();
+			stream.close();
+			
+			ClassReader reader = new ClassReader(data);
+			ClassNode node = new ClassNode();
+			reader.accept(node, ClassReader.EXPAND_FRAMES);
+			
+			return node;
+		} catch (Throwable err) {
+			throw new RuntimeException(err);
+		}
+	}
+	
 	@Override
 	public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
+		HookPatcher patcher = HookParser.parse(getNode(mixinClassName));
+		if (patcher != null) {
+			if (patcher.canApply(targetClass)) {
+				patcher.apply(targetClass);
+			}
+		}
+		
 		if (
 				mixinClassName.startsWith("tfc.tingedlights.mixin.backend.starlight")
 		) {
@@ -150,7 +184,7 @@ public class MixinConnector implements IMixinConfigPlugin {
 			}
 			
 			for (MethodNode method : targetClass.methods) {
-				if (method.name.equals(ASMAPI.mapMethod("updateSectionStatus"))) {
+				if (method.name.equals(ASMAPI.mapMethod(MixinConnector.updateSectionStats))) {
 					InsnList list1 = new InsnList();
 					list1.add(new VarInsnNode(Opcodes.ALOAD, 0));
 					list1.add(new VarInsnNode(Opcodes.ALOAD, 1));
@@ -158,7 +192,7 @@ public class MixinConnector implements IMixinConfigPlugin {
 					list1.add(ASMAPI.buildMethodCall(targetClassName.replace(".", "/"), updateSection.name, updateSection.desc, ASMAPI.MethodType.VIRTUAL));
 					
 					method.instructions.insert(list1);
-				} else if (method.name.equals(ASMAPI.mapMethod("enableLightSources"))) {
+				} else if (method.name.equals(ASMAPI.mapMethod(MixinConnector.enableLightSources))) {
 					InsnList list1 = new InsnList();
 					list1.add(new VarInsnNode(Opcodes.ALOAD, 0));
 					list1.add(new VarInsnNode(Opcodes.ALOAD, 1));
@@ -166,7 +200,7 @@ public class MixinConnector implements IMixinConfigPlugin {
 					list1.add(ASMAPI.buildMethodCall(targetClassName.replace(".", "/"), enableLights.name, enableLights.desc, ASMAPI.MethodType.VIRTUAL));
 					
 					method.instructions.insert(list1);
-				} else if (method.name.equals(ASMAPI.mapMethod("runUpdates"))) {
+				} else if (method.name.equals(ASMAPI.mapMethod(MixinConnector.runUpdates))) {
 					InsnList list1 = new InsnList();
 					list1.add(new VarInsnNode(Opcodes.ALOAD, 0));
 					list1.add(ASMAPI.buildMethodCall(targetClassName.replace(".", "/"), runUpdates.name, runUpdates.desc, ASMAPI.MethodType.VIRTUAL));
@@ -174,17 +208,17 @@ public class MixinConnector implements IMixinConfigPlugin {
 					method.instructions.insert(list1);
 				}
 			}
-//			try {
-//				FileOutputStream outputStream = new FileOutputStream(targetClass.name.substring(targetClass.name.lastIndexOf("/") + 1) + "-post.class");
-//				ClassWriter writer = new ClassWriter(0);
-//				targetClass.accept(writer);
-//				outputStream.write(writer.toByteArray());
-//				outputStream.flush();
-//				outputStream.close();
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//				System.out.println("Failed to transform class " + targetClassName + " with mixin " + mixinClassName);
-//			}
+			try {
+				FileOutputStream outputStream = new FileOutputStream(targetClass.name.substring(targetClass.name.lastIndexOf("/") + 1) + "-post.class");
+				ClassWriter writer = new ClassWriter(0);
+				targetClass.accept(writer);
+				outputStream.write(writer.toByteArray());
+				outputStream.flush();
+				outputStream.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.out.println("Failed to transform class " + targetClassName + " with mixin " + mixinClassName);
+			}
 		}
 	}
 }

@@ -5,39 +5,49 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import tfc.tingedlights.util.asm.annotation.Hook;
+import tfc.tingedlights.util.asm.annotation.MethodRedir;
+import tfc.tingedlights.util.asm.annotation.RemoveMethods;
+import tfc.tingedlights.util.asm.annotation.template.AnnotationTemplate;
+import tfc.tingedlights.util.asm.annotation.template.MethodTarget;
 import tfc.tingedlights.util.starlight.OutOfLineLightGetter;
 
-@Mixin(value = BlockStarLightEngine.class, remap = false)
+@Mixin(value = BlockStarLightEngine.class)
+@Hook(target = BlockStarLightEngine.class)
+@RemoveMethods(
+		targets = @MethodTarget(
+				value = {"getEmission0", "getEmission1"},
+				annotations = @AnnotationTemplate(
+						type = "org.spongepowered.asm.mixin.transformer.meta.MixinMerged",
+						values = {
+								"mixin=tfc.tingedlights.mixin.backend.starlight.BlockStarLightEngineMixin"
+						}
+				),
+				matchAllAnnotations = false
+		)
+)
 public class BlockStarLightEngineMixin implements OutOfLineLightGetter {
 	@Override
 	public int TingedLights$getLight(BlockState state, BlockGetter level, BlockPos pos) {
 		return state.getLightEmission(level, pos);
 	}
 	
-	@Redirect(method = "calculateLightValue", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;getLightEmission(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)I"))
+	@MethodRedir(
+			exclude = @MethodTarget("TingedLights$getLight"),
+			redirTarget = "Lnet/minecraft/world/level/block/state/BlockState;getLightEmission"
+	)
 	public int getEmission0(BlockState instance, BlockGetter getter, BlockPos pos) {
 		return TingedLights$getLight(instance, getter, pos);
 	}
 	
-	@Redirect(method = "getSources", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;getLightEmission(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)I"))
-	public int getEmission1(BlockState instance, BlockGetter getter, BlockPos pos) {
-		return TingedLights$getLight(instance, getter, pos);
-	}
-	
-	@Redirect(method = "getSources", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;getLightEmission()I"))
-	public int getEmission2(BlockState instance) {
+	@MethodRedir(
+			exclude = @MethodTarget("TingedLights$getLight"),
+			redirTarget = {
+					"Lnet/minecraft/world/level/block/state/BlockState;getLightEmission",
+					"Lnet/minecraft/world/level/block/state/BlockState;m_60791_"
+			}
+	)
+	public int getEmission1(BlockState instance) {
 		return TingedLights$getLight(instance, null, null);
-	}
-	
-	@Redirect(method = "lightChunk", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;getLightEmission(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)I"))
-	public int getEmission3(BlockState instance, BlockGetter getter, BlockPos pos) {
-		return TingedLights$getLight(instance, getter, pos);
-	}
-	
-	@Redirect(method = "checkBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;getLightEmission(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)I"))
-	public int getEmission4(BlockState instance, BlockGetter getter, BlockPos pos) {
-		return TingedLights$getLight(instance, getter, pos);
 	}
 }

@@ -55,7 +55,7 @@ public class Config {
 		public static float aoIntensity = 0.125f;
 		
 		@Comment("For vanilla-style AO, turn everything under this category to false")
-		@CFGSegment("Vertex Sorting")
+		@CFGSegment("VertexSorting")
 		public static class VertexSortingOptions {
 			@Name("SortVertices")
 			@Comment({
@@ -67,39 +67,30 @@ public class Config {
 			
 			@CFGSegment("AOSorting")
 			public static class SortingOptions {
-				@Name("SortOutside")
-				@Comment("Whether or not AO sort should sort outer corners")
-				@Default(valueBoolean = true)
-				public static boolean sortOutside = true;
-				
-				@Name("SortDual")
-				@Comment("Whether or not AO sort should sort perpendicular corners")
-				@Default(valueBoolean = true)
-				public static boolean sortPerpendicular = true;
-				
-				@Name("SortInner")
-				@Comment("Whether AO sort should sort inner corners")
-				@Default(valueBoolean = true)
-				public static boolean sortInner = true;
-				
-				@Name("BoxedOutside")
+				@Name("OutsideStyle")
 				@Comment({
 						"Outside corner AO style",
-						"0=boxed, 1=sloped, 2=vanilla-esk"
+						"0=unsorted, 1=boxed, 2=sloped, 3=vanilla"
 				})
-				@Default(valueI = 2)
-				@IntRange(minV = 0, maxV = 2)
-				public static int boxOutside = 2;
+				@Default(valueI = 3)
+				@IntRange(minV = 0, maxV = 3)
+				public static int boxOutside = 3;
 				
-				@Name("BoxedDual")
-				@Comment("Boxes off AO when there's two perpendicular corners")
-				@Default(valueBoolean = true)
-				public static boolean boxPerpendicular = true;
+				@Name("DualStyle")
+				@Comment({
+						"Perpendicular AO style",
+						"0=unsorted, 1=boxed, 2=sloped"
+				})
+				@Default(valueI = 1)
+				public static int boxPerpendicular = 1;
 				
-				@Name("BoxedInner")
-				@Comment("Whether AO sort should create boxes for inner corners")
-				@Default(valueBoolean = true)
-				public static boolean boxedInner = true;
+				@Name("InnerStyle")
+				@Comment({
+						"Inner corner AO style",
+						"0=unsorted, 1=boxed, 2=sloped"
+				})
+				@Default(valueI = 1)
+				public static int boxedInner = 1;
 			}
 		}
 	}

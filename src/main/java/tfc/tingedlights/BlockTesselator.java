@@ -114,6 +114,13 @@ public class BlockTesselator {
 		putBulkData(pConsumer, pPoseEntry, pQuad, pColorMuls, pRed, pGreen, pBlue, pCombinedLights, pCombinedOverlay, pMulColor, new float[][]{pColor, pColor, pColor, pColor}, defaultDimmed);
 	}
 	
+	protected static boolean aoSort() {
+		int perp = VertexSortingOptions.SortingOptions.boxPerpendicular;
+		int inne = VertexSortingOptions.SortingOptions.boxedInner;
+		int oute = VertexSortingOptions.SortingOptions.boxOutside;
+		return perp != 0 || inne != 0 || oute != 0;
+	}
+	
 	protected static void putBulkData(VertexConsumer pConsumer, PoseStack.Pose pPoseEntry, BakedQuad pQuad, float[] pColorMuls, float pRed, float pGreen, float pBlue, int[] pCombinedLights, int pCombinedOverlay, boolean pMulColor, float[][] pColor, boolean[] pDimmed) {
 		float[] afloat = new float[]{pColorMuls[0], pColorMuls[1], pColorMuls[2], pColorMuls[3]};
 		int[] aint1 = pQuad.getVertices();
@@ -127,7 +134,7 @@ public class BlockTesselator {
 		int firstVertex = 0;
 		
 		int countDimmed = 0;
-		if (VertexSortingOptions.SortingOptions.sortInner || VertexSortingOptions.SortingOptions.sortOutside || VertexSortingOptions.SortingOptions.sortPerpendicular) {
+		if (aoSort()) {
 			for (boolean b : pDimmed) {
 				if (b) {
 					countDimmed++;
@@ -138,40 +145,41 @@ public class BlockTesselator {
 		boolean skipVertSort = false;
 		switch (countDimmed) {
 			case 1 -> {
-				if (VertexSortingOptions.SortingOptions.sortOutside) {
-					switch (VertexSortingOptions.SortingOptions.boxOutside) {
-						case 0 -> {
-							if (pDimmed[1]) firstVertex = 1;
-							else if (pDimmed[3]) firstVertex = 1;
-						}
-						case 1 -> {
-							if (pDimmed[0]) firstVertex = 1;
-							else if (pDimmed[2]) firstVertex = 1;
-						}
-						case 2 -> {
-						}
+				switch (VertexSortingOptions.SortingOptions.boxOutside) {
+					case 0 -> skipVertSort = false;
+					case 1 -> {
+						if (pDimmed[1]) firstVertex = 1;
+						else if (pDimmed[3]) firstVertex = 1;
+						skipVertSort = true;
 					}
-					skipVertSort = true;
+					case 2 -> {
+						if (pDimmed[0]) firstVertex = 1;
+						else if (pDimmed[2]) firstVertex = 1;
+						skipVertSort = true;
+					}
+					case 3 -> skipVertSort = true;
 				}
 			}
 			case 2 -> {
-				if (VertexSortingOptions.SortingOptions.sortPerpendicular) {
-					boolean perpen = pDimmed[0] == pDimmed[2];
-					
-					if (perpen) {
-						if (VertexSortingOptions.SortingOptions.boxPerpendicular) if (pDimmed[1]) firstVertex = 1;
-						else if (pDimmed[0]) firstVertex = 1;
+				boolean perpen = pDimmed[0] == pDimmed[2];
+				
+				if (perpen) {
+					if (VertexSortingOptions.SortingOptions.boxPerpendicular != 0) {
+						if (pDimmed[VertexSortingOptions.SortingOptions.boxPerpendicular])
+							firstVertex = 1;
 						skipVertSort = true;
 					}
 				}
 			}
 			case 3 -> {
-				if (VertexSortingOptions.SortingOptions.sortInner) {
-					if (VertexSortingOptions.SortingOptions.boxedInner) {
+				switch (VertexSortingOptions.SortingOptions.boxedInner) {
+					case 0 -> skipVertSort = false;
+					case 1 -> {
 						if (!pDimmed[1]) firstVertex = 1;
 						else if (!pDimmed[3]) firstVertex = 1;
 						skipVertSort = true;
-					} else {
+					}
+					case 2 -> {
 						if (!pDimmed[0]) firstVertex = 1;
 						else if (!pDimmed[2]) firstVertex = 1;
 						skipVertSort = true;
