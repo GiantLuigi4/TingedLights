@@ -9,7 +9,7 @@ Light providers define what light type a block should use, and what brightness i
 Light types are only defined for the json which they are defined in
 
 ## Light types
-### TODO
+**TODO**
 
 ## Finding a good light color
 In my experience, good light colors come from
