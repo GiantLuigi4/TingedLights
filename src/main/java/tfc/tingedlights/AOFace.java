@@ -176,13 +176,15 @@ public class AOFace {
 		float[] srcS = shades;
 		
 		colors = new Color[COUNT];
-		shades = new float[COUNT];
+		if (srcS != null)
+			shades = new float[COUNT];
 		
 		for (int i = 0; i < vertices.length; i++) {
 			float[] weights = LightWeights.get(vertices[i], pDirection);
 			for (int i1 = 0; i1 < weights.length; i1++) {
 				colors[i] = blend(srcC, weights);
-				shades[i] = blend(srcS, weights);
+				if (srcS != null)
+					shades[i] = blend(srcS, weights);
 			}
 		}
 	}

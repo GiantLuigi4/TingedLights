@@ -47,17 +47,17 @@ public class BlockTesselator {
 		// so I added in an option to just replace it entirely
 		if (Config.TesselationOptions.removeVanillaAO) {
 			float directionalLighting = pLevel.getShade(pQuad.getDirection(), pQuad.isShade());
+			
+			pBrightness0 = pBrightness1 = pBrightness2 = pBrightness3 = directionalLighting;
+			
 			if (face != null) {
 				if (face.shades != null) {
-					pBrightness0 = pBrightness1 = pBrightness2 = pBrightness3 = directionalLighting;
-					
 					pBrightness0 *= face.shades[0];
 					pBrightness1 *= face.shades[1];
 					pBrightness2 *= face.shades[2];
 					pBrightness3 *= face.shades[3];
 				}
-			} else
-				pBrightness0 = pBrightness1 = pBrightness2 = pBrightness3 = directionalLighting;
+			}
 		}
 		
 		if (!(pConsumer instanceof VertexBufferConsumerExtensions)) {
@@ -65,6 +65,10 @@ public class BlockTesselator {
 			return;
 		}
 		
+		// no
+		// things in an if statement should not extend beyond the if's scope
+		// I refuse to accept this syntax suggestion
+		//noinspection PatternVariableCanBeUsed
 		VertexBufferConsumerExtensions extensions = ((VertexBufferConsumerExtensions) pConsumer);
 		
 		if (face != null) {
