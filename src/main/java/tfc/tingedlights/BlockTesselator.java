@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.client.model.pipeline.LightUtil;
 import org.lwjgl.system.MemoryStack;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.LightManager;
@@ -21,9 +22,10 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
 import static tfc.tingedlights.utils.config.Config.TesselationOptions.VertexSortingOptions;
+import static tfc.tingedlights.utils.config.Config.TesselationOptions.aoIntensity;
 
 public class BlockTesselator {
-	public static void putQuadData(BlockColors blockColors, BlockAndTintGetter pLevel, BlockState pState, BlockPos pPos, VertexConsumer pConsumer, PoseStack.Pose pPose, BakedQuad pQuad, float pBrightness0, float pBrightness1, float pBrightness2, float pBrightness3, int pLightmap0, int pLightmap1, int pLightmap2, int pLightmap3, int pPackedOverlay, ThreadLocal<BlockPos> posThreadLocal, boolean smooth, AOFace face) {
+	public static void putQuadData(BlockColors blockColors, BlockAndTintGetter pLevel, BlockState pState, BlockPos pPos, VertexConsumer pConsumer, PoseStack.Pose pPose, BakedQuad pQuad, float pBrightness0, float pBrightness1, float pBrightness2, float pBrightness3, int pLightmap0, int pLightmap1, int pLightmap2, int pLightmap3, int pPackedOverlay, boolean smooth, AOFace face, boolean repackLight) {
 		TesselationState.guiLighting.set(false);
 		
 		float f;
@@ -41,16 +43,48 @@ public class BlockTesselator {
 		}
 		
 		int[] lightmap = new int[]{pLightmap0, pLightmap1, pLightmap2, pLightmap3};
-//		int maxLightmap = 0;
-//		int maxBlock = 0;
 		
-		// TODO: maybe allow vanilla lighting on blocks that don't have colored lighting?
-//		for (int i = 0; i < lightmap.length; i++) {
-//			int unpacked = LightTexture.sky(lightmap[i]);
-//			maxLightmap = Math.max(maxLightmap, LightTexture.sky(lightmap[i]));
-//			maxBlock = Math.max(maxBlock, LightTexture.block(lightmap[i]));
-////			lightmap[i] = LightTexture.pack(0, unpacked);
-//		}
+		// vanilla's AO algo is scuffed
+		// so I added in an option to just replace it entirely
+		if (Config.TesselationOptions.removeVanillaAO) {
+			float directionalLighting = pLevel.getShade(pQuad.getDirection(), pQuad.isShade());
+			if (face != null) {
+				if (face.shades != null) {
+					pBrightness0 = pBrightness1 = pBrightness2 = pBrightness3 = directionalLighting;
+					
+					pBrightness0 *= face.shades[0];
+					pBrightness1 *= face.shades[1];
+					pBrightness2 *= face.shades[2];
+					pBrightness3 *= face.shades[3];
+				} else {
+					pBrightness0 /= directionalLighting;
+					pBrightness1 /= directionalLighting;
+					pBrightness2 /= directionalLighting;
+					pBrightness3 /= directionalLighting;
+					pBrightness0 = 1 - pBrightness0;
+					pBrightness1 = 1 - pBrightness1;
+					pBrightness2 = 1 - pBrightness2;
+					pBrightness3 = 1 - pBrightness3;
+					pBrightness0 *= 1 / 0.525;
+					pBrightness1 *= 1 / 0.525;
+					pBrightness2 *= 1 / 0.525;
+					pBrightness3 *= 1 / 0.525;
+					pBrightness0 *= aoIntensity;
+					pBrightness1 *= aoIntensity;
+					pBrightness2 *= aoIntensity;
+					pBrightness3 *= aoIntensity;
+					pBrightness0 = 1 - pBrightness0;
+					pBrightness1 = 1 - pBrightness1;
+					pBrightness2 = 1 - pBrightness2;
+					pBrightness3 = 1 - pBrightness3;
+					pBrightness0 *= directionalLighting;
+					pBrightness1 *= directionalLighting;
+					pBrightness2 *= directionalLighting;
+					pBrightness3 *= directionalLighting;
+				}
+			} else
+				pBrightness0 = pBrightness1 = pBrightness2 = pBrightness3 = directionalLighting;
+		}
 		
 		if (!(pConsumer instanceof VertexBufferConsumerExtensions)) {
 			pConsumer.putBulkData(pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, 1, lightmap, pPackedOverlay, true);
@@ -73,7 +107,6 @@ public class BlockTesselator {
 				extensions.setColorDone(false);
 				extensions.setDefault(Color.BLACK);
 				pConsumer.putBulkData(pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, 1, lightmap, pPackedOverlay, true);
-				extensions.setColorDone(false);
 				return;
 			}
 			
@@ -86,15 +119,16 @@ public class BlockTesselator {
 			}, face.dimmed);
 			extensions.setColorDone(false);
 		} else {
-			BlockPos lightProbePos = posThreadLocal.get();
-			if (lightProbePos == null) lightProbePos = pPos;
+			BlockPos lightProbePos = pPos;
+			if (!repackLight)
+				lightProbePos = lightProbePos.relative(pQuad.getDirection());
+			
 			LightManager manager = (LightManager) pLevel.getLightEngine();
 			Color blockColor = manager.getColor(lightProbePos, true);
 			if (blockColor == null) {
 				extensions.setColorDone(false);
 				extensions.setDefault(Color.BLACK);
 				pConsumer.putBulkData(pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, 1, lightmap, pPackedOverlay, true);
-				extensions.setColorDone(false);
 				return;
 			}
 			
@@ -121,13 +155,10 @@ public class BlockTesselator {
 		Matrix4f matrix4f = pPoseEntry.pose();
 		
 		Vec3i norm = pQuad.getDirection().getNormal();
-		Vector3f normalVec = new Vector3f((float) norm.getX(), (float) norm.getY(), (float) norm.getZ());
-		normalVec.transform(pPoseEntry.normal());
 		
 		Vector3f bakedNormal = new Vector3f();
 		
-		int j = pQuad.getVertices().length / 8;
-		MemoryStack memorystack = MemoryStack.stackPush();
+		int count = pQuad.getVertices().length / 8;
 		Vector4f posVec = new Vector4f(0, 0, 0, 0);
 		
 		int firstVertex = 0;
@@ -191,7 +222,7 @@ public class BlockTesselator {
 			float maxV = 0;
 			
 			// set the leading vertex to the brightest vertex to avoid jagged edges
-			for (int k = 0; k < j; ++k) {
+			for (int k = 0; k < count; ++k) {
 				float[] colors = pColor[k];
 				float v = Math.max(colors[0], Math.max(colors[1], colors[2]));
 				if (v > maxV) {
@@ -201,8 +232,9 @@ public class BlockTesselator {
 			}
 		}
 		
-		if (firstVertex >= j) firstVertex -= j;
+		if (firstVertex >= count) firstVertex -= count;
 		
+		MemoryStack memorystack = MemoryStack.stackPush();
 		try {
 			ByteBuffer bytebuffer = memorystack.malloc(DefaultVertexFormat.BLOCK.getVertexSize());
 			IntBuffer intbuffer = bytebuffer.asIntBuffer();
@@ -238,22 +270,28 @@ public class BlockTesselator {
 				}
 				
 				// lighting
-				int light = pConsumer.applyBakedLighting(pCombinedLights[k], bytebuffer);
+				int light = applyBakedLighting(pCombinedLights[k], bytebuffer);
 				
 				// texture
 				float u = bytebuffer.getFloat(16);
 				float v = bytebuffer.getFloat(20);
 				
+				// position
 				posVec.set(x, y, z, 1); // memory optimization: move vector declaration out of the loop
 				posVec.transform(matrix4f);
 				
 				// normals
 				if (applyBakedNormals(bakedNormal, bytebuffer, pPoseEntry.normal()))
 					vertex(pConsumer, posVec.x(), posVec.y(), posVec.z(), r, g, b, 1.0F, u, v, pCombinedOverlay, light, bakedNormal.x(), bakedNormal.y(), bakedNormal.z(), pColor[k]);
-				else
+				else {
+					// this should never happen in block rendering
+					Vector3f normalVec = new Vector3f((float) norm.getX(), (float) norm.getY(), (float) norm.getZ());
+					normalVec.transform(pPoseEntry.normal());
+					
 					vertex(pConsumer, posVec.x(), posVec.y(), posVec.z(), r, g, b, 1.0F, u, v, pCombinedOverlay, light, normalVec.x(), normalVec.y(), normalVec.z(), pColor[k]);
+				}
 				
-				if (k == (j - 1)) k = -1;
+				if (k == (count - 1)) k = -1;
 			}
 		} catch (Throwable throwable1) {
 			try {
@@ -266,6 +304,15 @@ public class BlockTesselator {
 		}
 		
 		memorystack.close();
+	}
+	
+	// copy of forge code, ignores block light
+	public static int applyBakedLighting(int packedLight, ByteBuffer data) {
+		int sl = (packedLight >> 16) & 0xFFFF;
+		int offset = LightUtil.getLightOffset(0) * 4; // int offset for vertex 0 * 4 bytes per int
+		int slBaked = Short.toUnsignedInt(data.getShort(offset + 2));
+		sl = Math.max(sl, slBaked);
+		return (sl << 16);
 	}
 	
 	// copy of forge code, allows a small memory optimization as well as preventing repeated matrix math
@@ -282,44 +329,46 @@ public class BlockTesselator {
 	}
 	
 	protected static void vertex(VertexConsumer pConsumer, float pX, float pY, float pZ, float pRed, float pGreen, float pBlue, float pAlpha, float pTexU, float pTexV, int pOverlayUV, int pLightmapUV, float pNormalX, float pNormalY, float pNormalZ, float[] lightColor) {
-//		pConsumer.vertex(pX, pY, pZ);
-//		pConsumer.color(pRed, pGreen, pBlue, pAlpha);
-//		pConsumer.uv(pTexU, pTexV);
-//		pConsumer.overlayCoords(pOverlayUV);
-//		pConsumer.uv2(pLightmapUV);
-//		pConsumer.normal(pNormalX, pNormalY, pNormalZ);
-//		pConsumer.color((int) (lightColor[0] * 255), (int) (lightColor[1] * 255), (int) (lightColor[2] * 255), 255);
-//		pConsumer.endVertex();
-		
-		BufferBuilder builder = (BufferBuilder) pConsumer;
-		// position
-		builder.putFloat(0, pX);
-		builder.putFloat(4, pY);
-		builder.putFloat(8, pZ);
-		// tint color
-		builder.putByte(12, (byte) ((int) (pRed * 255.0F)));
-		builder.putByte(13, (byte) ((int) (pGreen * 255.0F)));
-		builder.putByte(14, (byte) ((int) (pBlue * 255.0F)));
-		builder.putByte(15, (byte) ((int) (pAlpha * 255.0F)));
-		// texture
-		builder.putFloat(16, pTexU);
-		builder.putFloat(20, pTexV);
-		
-		int i = 24;
-		// lightmap
-		builder.putShort(i, (short) 0);
-		builder.putShort(i + 2, (short) (pLightmapUV >> 16 & '\uffff'));
-		// normal vector
-		builder.putByte(i + 4, BufferVertexConsumer.normalIntValue(pNormalX));
-		builder.putByte(i + 5, BufferVertexConsumer.normalIntValue(pNormalY));
-		builder.putByte(i + 6, BufferVertexConsumer.normalIntValue(pNormalZ));
-		// light color
-		builder.putByte(i + 8, (byte) ((int) (lightColor[0] * 255.0F)));
-		builder.putByte(i + 9, (byte) ((int) (lightColor[1] * 255.0F)));
-		builder.putByte(i + 10, (byte) ((int) (lightColor[2] * 255.0F)));
-		builder.putByte(i + 11, (byte) 255);
-		// go to next vertex
-		builder.nextElementByte += i + 12;
-		builder.endVertex();
+		if (Config.TesselationOptions.fastDraw) {
+			BufferBuilder builder = (BufferBuilder) pConsumer;
+			// position
+			builder.putFloat(0, pX);
+			builder.putFloat(4, pY);
+			builder.putFloat(8, pZ);
+			// tint color
+			builder.putByte(12, (byte) ((int) (pRed * 255.0F)));
+			builder.putByte(13, (byte) ((int) (pGreen * 255.0F)));
+			builder.putByte(14, (byte) ((int) (pBlue * 255.0F)));
+			builder.putByte(15, (byte) ((int) (pAlpha * 255.0F)));
+			// texture
+			builder.putFloat(16, pTexU);
+			builder.putFloat(20, pTexV);
+			
+			int i = 24;
+			// lightmap
+			builder.putShort(i, (short) 0);
+			builder.putShort(i + 2, (short) (pLightmapUV >> 16 & '\uffff'));
+			// normal vector
+			builder.putByte(i + 4, BufferVertexConsumer.normalIntValue(pNormalX));
+			builder.putByte(i + 5, BufferVertexConsumer.normalIntValue(pNormalY));
+			builder.putByte(i + 6, BufferVertexConsumer.normalIntValue(pNormalZ));
+			// light color
+			builder.putByte(i + 8, (byte) ((int) (lightColor[0] * 255.0F)));
+			builder.putByte(i + 9, (byte) ((int) (lightColor[1] * 255.0F)));
+			builder.putByte(i + 10, (byte) ((int) (lightColor[2] * 255.0F)));
+			builder.putByte(i + 11, (byte) 255);
+			// go to next vertex
+			builder.nextElementByte += i + 12;
+			builder.endVertex();
+		} else {
+			pConsumer.vertex(pX, pY, pZ);
+			pConsumer.color(pRed, pGreen, pBlue, pAlpha);
+			pConsumer.uv(pTexU, pTexV);
+			pConsumer.overlayCoords(pOverlayUV);
+			pConsumer.uv2(pLightmapUV);
+			pConsumer.normal(pNormalX, pNormalY, pNormalZ);
+			pConsumer.color((int) (lightColor[0] * 255), (int) (lightColor[1] * 255), (int) (lightColor[2] * 255), 255);
+			pConsumer.endVertex();
+		}
 	}
 }

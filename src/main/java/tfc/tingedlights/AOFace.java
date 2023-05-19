@@ -13,6 +13,7 @@ import tfc.tingedlights.data.access.TingedLightsBlockAttachments;
 import tfc.tingedlights.util.BetterAdjacencyInfo;
 import tfc.tingedlights.utils.config.Config;
 
+import java.util.Arrays;
 import java.util.BitSet;
 
 public class AOFace {
@@ -26,6 +27,7 @@ public class AOFace {
 	
 	Color[] colors = null;
 	boolean[] dimmed = null;
+	float[] shades = null;
 	
 	private static final int[][] MAPPINGS = new int[][]{
 			new int[]{0, 3},
@@ -49,11 +51,25 @@ public class AOFace {
 		colors = new Color[COUNT];
 		dimmed = new boolean[COUNT];
 		
+		if (pShapeFlags.get(1)) {
+			// TODO: figure out custom AO for non-full blocks
+			Arrays.fill(colors, fallback);
+			return;
+		}
+		
 		int lightBlock;
 		BlockState state;
 		
+		if (Config.TesselationOptions.removeVanillaAO && Config.TesselationOptions.aoIntensity != 0) {
+			shades = new float[COUNT];
+			Arrays.fill(shades, 1);
+		}
+		
 		for (int i = 0; i < COUNT; i++) {
 			boolean fullDimmed = false;
+			
+			
+			boolean hasSoft = false;
 			
 			
 			/* edge 1 */
@@ -67,9 +83,11 @@ public class AOFace {
 			// ao
 			lightBlock = lightObstruction(state, pLevel, posMut);
 			if (lightBlock == 15) dimmed[i] = true;
-			else
+			else {
+				if (lightBlock == 16) hasSoft = true;
 				// smooth light
 				d0 = getLightColor(manager, state, pLevel, posMut);
+			}
 			
 			
 			/* edge 2 */
@@ -82,9 +100,11 @@ public class AOFace {
 			if (lightBlock == 15) {
 				if (dimmed[i]) fullDimmed = true;
 				dimmed[i] = true;
-			} else
+			} else {
+				if (lightBlock == 16) hasSoft = true;
 				// smooth light
 				d1 = getLightColor(manager, state, pLevel, posMut);
+			}
 			
 			
 			/* corner */
@@ -100,21 +120,35 @@ public class AOFace {
 				// ao
 				lightBlock = lightObstruction(state, pLevel, posMut);
 				if (lightBlock == 15) dimmed[i] = true;
-				else
+				else {
+					if (lightBlock == 16) hasSoft = true;
 					// smooth light
 					d2 = getLightColor(manager, state, pLevel, posMut);
+				}
 			}
 			
-			colors[i] = maxBlend(fallback, d0, d1, d2);
+			colors[i] = maxBlend(dimmed[i], fullDimmed, fallback, d0, d1, d2);
 			
-			if (dimmed[i]) {
+			if (dimmed[i] || hasSoft) {
 				float intensity = (1 - Config.TesselationOptions.aoIntensity);
 				if (Config.TesselationOptions.aoIntensity != 0) {
-					colors[i] = new Color(
-							colors[i].r() * intensity,
-							colors[i].g() * intensity,
-							colors[i].b() * intensity
-					);
+					// make corners darker than edges
+					if (fullDimmed)
+						intensity *= 0.75f;
+					if (hasSoft)
+						intensity = (intensity + 1) * 0.5f;
+					
+					if (shades != null) {
+						// for when vanilla AO is removed
+						shades[i] = intensity;
+					} else {
+						// for when vanilla AO is not removed
+						colors[i] = new Color(
+								colors[i].r() * intensity,
+								colors[i].g() * intensity,
+								colors[i].b() * intensity
+						);
+					}
 				}
 			}
 		}
@@ -123,13 +157,18 @@ public class AOFace {
 	protected int lightObstruction(BlockState state, BlockAndTintGetter pLevel, BlockPos blockPos) {
 		if (state.getBlock().equals(Blocks.WATER))
 			return 0; // TODO: I'd like to make this a bit less hardcoded if possible
-		if (state.getBlock() instanceof TingedLightsBlockAttachments attachments) {
-			int b = attachments.getBrightness(state, pLevel, blockPos);
-			if (b != 0)
-				return 0;
+		
+		int lb = state.getLightBlock(pLevel, blockPos);
+		
+		if (lb == 15) {
+			if (state.getBlock() instanceof TingedLightsBlockAttachments attachments) {
+				int b = attachments.getBrightness(state, pLevel, blockPos);
+				if (b != 0)
+					return Config.TesselationOptions.allowSoftAO ? 16 : 0;
+			}
 		}
 		
-		return state.getLightBlock(pLevel, blockPos);
+		return lb;
 	}
 	
 	protected Color getLightColor(LightManager manager, BlockState blockstate, BlockAndTintGetter pLevel, BlockPos blockpos$mutableblockpos) {
@@ -151,7 +190,7 @@ public class AOFace {
 		return new Color(rOut, gOut, bOut);
 	}
 	
-	protected Color maxBlend(Color min, Color... colors) {
+	protected Color maxBlend(boolean dimmed, boolean fullyDimmed, Color min, Color... colors) {
 		float rOut = min.r();
 		float gOut = min.g();
 		float bOut = min.b();
@@ -159,6 +198,10 @@ public class AOFace {
 		if (Config.TesselationOptions.aoMode <= 1) {
 			boolean alt = Config.TesselationOptions.aoMode == 1;
 			int total = alt ? 1 : (colors.length + 1);
+			if (!alt) {
+				if (dimmed) total -= 1;
+				if (fullyDimmed) total -= 1;
+			}
 			
 			for (Color color : colors) {
 				if (alt && color.equals(Color.BLACK))
@@ -181,6 +224,9 @@ public class AOFace {
 				gOut = Math.max(gOut, color.g());
 				bOut = Math.max(bOut, color.b());
 			}
+			rOut /= 1.1;
+			gOut /= 1.1;
+			bOut /= 1.1;
 		}
 		
 		return new Color(rOut, gOut, bOut);

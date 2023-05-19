@@ -48,23 +48,48 @@ public class Config {
 		@Name("AOIntensity")
 		@Comment({
 				"How defined ambient occlusion should be",
-				"I think 0 is how it is in vanilla, hard to tell due to vanilla not having colored lights"
+				"If vanilla AO is enabled, then 0 is vanilla",
+				"If vanilla AO not enabled, then",
+				"- with SmoothingMode 0, 0.25 gets it close to vanilla",
+				"- with SmoothingMode 1 and 2, 0.4 gets it close to vanilla"
 		})
-		@Default(valueF = 0.125f)
+		@Default(valueF = 0.4f)
 		@FloatRange(minV = 0, maxV = 1)
-		public static float aoIntensity = 0.125f;
+		public static float aoIntensity = 0.4f;
+		
+		@Name("RemoveVanillaAO")
+		@Comment({
+				"Whether or not to remove vanilla AO",
+				"Turning this on will most likely make smooth lighting look nicer"
+		})
+		@Default(valueBoolean = true)
+		public static boolean removeVanillaAO;
+		
+		@Name("SoftAO")
+		@Comment({
+				"Whether or not AO should apply around light sources that are also full blocks"
+		})
+		@Default(valueBoolean = true)
+		public static boolean allowSoftAO;
 		
 		@Name("SmoothingMode")
 		@Comment({
 				"How smooth lighting should be calculated",
-				"Sum gets very strong AO",
-				"AltSum gets softer AO",
-				"Max gets the softest AO",
+				"Each of these has a different appearance",
+				"I believe 1 is most like how vanilla behaves",
 				"0=sum, 1=alt_sum, 2=max"
 		})
-		@Default(valueI = 1)
+		@Default(valueI = 2)
 		@IntRange(minV = 0, maxV = 2)
 		public static int aoMode;
+		
+		@Name("FastDraw")
+		@Comment({
+				"Whether or not to use a faster rendering method",
+				"This may or may not cause incompatibilities with other mods that change block rendering"
+		})
+		@Default(valueBoolean = true)
+		public static boolean fastDraw;
 		
 		@Comment("For vanilla-style AO, turn everything under this category to false")
 		@CFGSegment("VertexSorting")
