@@ -11,8 +11,8 @@ import tfc.tingedlights.util.asm.annotation.template.AnnotationTemplate;
 import tfc.tingedlights.util.asm.annotation.template.MethodTarget;
 import tfc.tingedlights.util.starlight.OutOfLineChunkExtensionAccessor;
 
-@Mixin(value = StarLightInterface.class)
-@Hook(target = StarLightInterface.class)
+@Mixin(StarLightInterface.class)
+@Hook(StarLightInterface.class)
 @RemoveMethods(
 		targets = @MethodTarget(
 				value = {"preGetLightValue"},

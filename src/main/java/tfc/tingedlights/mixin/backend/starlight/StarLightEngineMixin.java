@@ -12,8 +12,8 @@ import tfc.tingedlights.util.asm.annotation.template.AnnotationTemplate;
 import tfc.tingedlights.util.asm.annotation.template.MethodTarget;
 import tfc.tingedlights.util.starlight.OutOfLineLightGetter;
 
-@Mixin(value = StarLightEngine.class)
-@Hook(target = StarLightEngine.class)
+@Mixin(StarLightEngine.class)
+@Hook(StarLightEngine.class)
 @RemoveMethods(
 		targets = @MethodTarget(
 				value = {"getEmission0", "getEmission1"},

@@ -41,7 +41,7 @@ public class AOFace {
 		ModelBlockRenderer.AdjacencyInfo adjacencyInfo = ModelBlockRenderer.AdjacencyInfo.fromFacing(pDirection);
 		BetterAdjacencyInfo adjacency = new BetterAdjacencyInfo(adjacencyInfo, pDirection);
 		
-		Color fallback = LightBlender.getLight(pLevel, manager, blockpos, Color.BLACK);
+		Color fallback = getLightColor(manager, pLevel.getBlockState(blockpos), pLevel, blockpos);
 		
 		BlockPos.MutableBlockPos posMut = new BlockPos.MutableBlockPos();
 		
@@ -66,7 +66,7 @@ public class AOFace {
 			// smooth light
 			posMut.setWithOffset(blockpos, adjacency.edges[MAPPINGS[i][0]]);
 			Color d0 = getLightColor(manager, state = pLevel.getBlockState(posMut), pLevel, posMut);
-			if (state.isViewBlocking(pLevel, posMut)) d0 = fallback;
+//			if (state.isViewBlocking(pLevel, posMut)) d0 = fallback;
 			
 			// ao
 			lightBlock = lightObstruction(state, pLevel, posMut);
@@ -75,7 +75,7 @@ public class AOFace {
 			// smooth light
 			posMut.setWithOffset(blockpos, adjacency.edges[MAPPINGS[i][1]]);
 			Color d1 = getLightColor(manager, state = pLevel.getBlockState(posMut), pLevel, posMut);
-			if (state.isViewBlocking(pLevel, posMut)) d1 = fallback;
+//			if (state.isViewBlocking(pLevel, posMut)) d1 = fallback;
 			
 			// ao
 			lightBlock = lightObstruction(state, pLevel, posMut);
@@ -84,7 +84,7 @@ public class AOFace {
 			// smooth light
 			posMut.setWithOffset(blockpos, adjacency.edges[MAPPINGS[i][0]]).move(adjacency.edges[MAPPINGS[i][1]]);
 			Color d2 = getLightColor(manager, state = pLevel.getBlockState(posMut), pLevel, posMut);
-			if (state.isViewBlocking(pLevel, posMut)) d2 = fallback;
+//			if (state.isViewBlocking(pLevel, posMut)) d2 = fallback;
 			
 			// ao
 			lightBlock = lightObstruction(state, pLevel, posMut);
