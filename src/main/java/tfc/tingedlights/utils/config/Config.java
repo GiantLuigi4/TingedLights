@@ -54,6 +54,18 @@ public class Config {
 		@FloatRange(minV = 0, maxV = 1)
 		public static float aoIntensity = 0.125f;
 		
+		@Name("SmoothingMode")
+		@Comment({
+				"How smooth lighting should be calculated",
+				"Sum gets very strong AO",
+				"AltSum gets softer AO",
+				"Max gets the softest AO",
+				"0=sum, 1=alt_sum, 2=max"
+		})
+		@Default(valueI = 1)
+		@IntRange(minV = 0, maxV = 2)
+		public static int aoMode;
+		
 		@Comment("For vanilla-style AO, turn everything under this category to false")
 		@CFGSegment("VertexSorting")
 		public static class VertexSortingOptions {
@@ -70,6 +82,7 @@ public class Config {
 				@Name("OutsideStyle")
 				@Comment({
 						"Outside corner AO style",
+						"Sodium uses 2",
 						"0=unsorted, 1=boxed, 2=sloped, 3=vanilla"
 				})
 				@Default(valueI = 3)

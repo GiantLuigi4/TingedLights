@@ -24,8 +24,7 @@ public class ChunkAccessMixin implements ColorExtendedChunk {
 	
 	@Override
 	public void setBlockEmptinessMap(Light light, boolean[] var1) {
-		if (emptiness.containsKey(light)) emptiness.replace(light, var1);
-		else emptiness.put(light, var1);
+		emptiness.put(light, var1);
 	}
 	
 	@Override
@@ -35,16 +34,15 @@ public class ChunkAccessMixin implements ColorExtendedChunk {
 	
 	@Override
 	public void setBlockNibbles(Light light, SWMRNibbleArray[] var1) {
-		if (nibbles.containsKey(light)) nibbles.replace(light, var1);
-		else nibbles.put(light, var1);
+		nibbles.put(light, var1);
 	}
 	
 	@Override
 	public SWMRNibbleArray[] getBlockNibbles(Light light) {
-		if (!nibbles.containsKey(light)) nibbles.put(light, StarLightEngine.getFilledEmptyLight((Level) levelHeightAccessor));
-		return nibbles.get(light);
+		SWMRNibbleArray[] nibble = nibbles.get(light);
+		if (nibble == null) nibbles.put(light, nibble = StarLightEngine.getFilledEmptyLight((Level) levelHeightAccessor));
+		return nibble;
 	}
-	
 	
 	@Override
 	public SWMRNibbleArray[] getSkyNibbles(Light light) {

@@ -9,6 +9,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.LightManager;
+import tfc.tingedlights.data.access.TingedLightsBlockAttachments;
 import tfc.tingedlights.util.BetterAdjacencyInfo;
 import tfc.tingedlights.utils.config.Config;
 
@@ -48,69 +49,63 @@ public class AOFace {
 		colors = new Color[COUNT];
 		dimmed = new boolean[COUNT];
 		
-//		Vec3[] vertices = new Vec3[COUNT];
-//		for (int i = 0; i < COUNT; i++) {
-//			int index = i * 8;
-//			vertices[i] = new Vec3(
-//					Float.intBitsToFloat(bakedQuad.getVertices()[index]),
-//					Float.intBitsToFloat(bakedQuad.getVertices()[index + 1]),
-//					Float.intBitsToFloat(bakedQuad.getVertices()[index + 2])
-//			);
-//		}
-//		BlockState selfState = pLevel.getBlockState(pPos);
-		
 		int lightBlock;
 		BlockState state;
 		
 		for (int i = 0; i < COUNT; i++) {
-			// smooth light
+			boolean fullDimmed = false;
+			
+			
+			/* edge 1 */
 			posMut.setWithOffset(blockpos, adjacency.edges[MAPPINGS[i][0]]);
-			Color d0 = getLightColor(manager, state = pLevel.getBlockState(posMut), pLevel, posMut);
-//			if (state.isViewBlocking(pLevel, posMut)) d0 = fallback;
+			state = pLevel.getBlockState(posMut);
 			
+			// if the block obstructs light and is not a light source,
+			// then don't bother getting the light color
+			// it will be BLACK anyway
+			Color d0 = Color.BLACK;
 			// ao
 			lightBlock = lightObstruction(state, pLevel, posMut);
 			if (lightBlock == 15) dimmed[i] = true;
+			else
+				// smooth light
+				d0 = getLightColor(manager, state, pLevel, posMut);
 			
-			// smooth light
+			
+			/* edge 2 */
 			posMut.setWithOffset(blockpos, adjacency.edges[MAPPINGS[i][1]]);
-			Color d1 = getLightColor(manager, state = pLevel.getBlockState(posMut), pLevel, posMut);
-//			if (state.isViewBlocking(pLevel, posMut)) d1 = fallback;
+			state = pLevel.getBlockState(posMut);
 			
+			Color d1 = Color.BLACK;
 			// ao
 			lightBlock = lightObstruction(state, pLevel, posMut);
-			if (lightBlock == 15) dimmed[i] = true;
+			if (lightBlock == 15) {
+				if (dimmed[i]) fullDimmed = true;
+				dimmed[i] = true;
+			} else
+				// smooth light
+				d1 = getLightColor(manager, state, pLevel, posMut);
 			
-			// smooth light
-			posMut.setWithOffset(blockpos, adjacency.edges[MAPPINGS[i][0]]).move(adjacency.edges[MAPPINGS[i][1]]);
-			Color d2 = getLightColor(manager, state = pLevel.getBlockState(posMut), pLevel, posMut);
-//			if (state.isViewBlocking(pLevel, posMut)) d2 = fallback;
 			
-			// ao
-			lightBlock = lightObstruction(state, pLevel, posMut);
-			if (lightBlock == 15) dimmed[i] = true;
+			/* corner */
+			Color d2 = Color.BLACK;
+			
+			// if both sides are dimmed, then that means it shouldn't check the corner
+			// this prevents light bleeding
+			if (!fullDimmed) {
+				posMut.setWithOffset(blockpos, adjacency.edges[MAPPINGS[i][0]])
+						.move(adjacency.edges[MAPPINGS[i][1]]);
+				state = pLevel.getBlockState(posMut);
+				
+				// ao
+				lightBlock = lightObstruction(state, pLevel, posMut);
+				if (lightBlock == 15) dimmed[i] = true;
+				else
+					// smooth light
+					d2 = getLightColor(manager, state, pLevel, posMut);
+			}
 			
 			colors[i] = maxBlend(fallback, d0, d1, d2);
-			
-//			if (pShapeFlags.get(0) && !selfState.isSolidRender(pLevel, pPos)) {
-//				dimmed[i] = false;
-//
-//				colors[i] = maxBlend(
-//						fallback,
-//						LightBlender.blend(
-//								vertices[i]
-//										.add(-0.5, -0.5, -0.5)
-//										.scale(0.99)
-//										.add(0.5, 0.5, 0.5)
-//										.add(pPos.getX(), pPos.getY(), pPos.getZ()),
-//								manager, pLevel
-//						),
-//						colors[i]
-//				);
-//
-//				if (colors[i].getBrightness() < fallback.getBrightness())
-//					dimmed[i] = true;
-//			}
 			
 			if (dimmed[i]) {
 				float intensity = (1 - Config.TesselationOptions.aoIntensity);
@@ -128,6 +123,12 @@ public class AOFace {
 	protected int lightObstruction(BlockState state, BlockAndTintGetter pLevel, BlockPos blockPos) {
 		if (state.getBlock().equals(Blocks.WATER))
 			return 0; // TODO: I'd like to make this a bit less hardcoded if possible
+		if (state.getBlock() instanceof TingedLightsBlockAttachments attachments) {
+			int b = attachments.getBrightness(state, pLevel, blockPos);
+			if (b != 0)
+				return 0;
+		}
+		
 		return state.getLightBlock(pLevel, blockPos);
 	}
 	
@@ -155,17 +156,32 @@ public class AOFace {
 		float gOut = min.g();
 		float bOut = min.b();
 		
-		for (Color color : colors) {
-//			rOut = Math.max(rOut, color.r());
-//			gOut = Math.max(gOut, color.g());
-//			bOut = Math.max(bOut, color.b());
-			rOut += color.r();
-			gOut += color.g();
-			bOut += color.b();
+		if (Config.TesselationOptions.aoMode <= 1) {
+			boolean alt = Config.TesselationOptions.aoMode == 1;
+			int total = alt ? 1 : (colors.length + 1);
+			
+			for (Color color : colors) {
+				if (alt && color.equals(Color.BLACK))
+					continue;
+				
+				rOut += color.r();
+				gOut += color.g();
+				bOut += color.b();
+				
+				if (alt)
+					total += 1;
+			}
+			
+			rOut /= total;
+			gOut /= total;
+			bOut /= total;
+		} else {
+			for (Color color : colors) {
+				rOut = Math.max(rOut, color.r());
+				gOut = Math.max(gOut, color.g());
+				bOut = Math.max(bOut, color.b());
+			}
 		}
-		rOut /= colors.length + 1;
-		gOut /= colors.length + 1;
-		bOut /= colors.length + 1;
 		
 		return new Color(rOut, gOut, bOut);
 	}

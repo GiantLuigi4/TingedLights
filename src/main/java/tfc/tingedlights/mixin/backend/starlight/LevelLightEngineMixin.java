@@ -37,6 +37,8 @@ public class LevelLightEngineMixin implements ColoredLightEngine {
 	@Unique
 	final Map<Light, StarLightInterface> engines = new HashMap<>();
 	@Unique
+	Map.Entry<Light, StarLightInterface>[] enginesArray = new Map.Entry[0];
+	@Unique
 	final ArrayList<ChunkPos> enabledLights = new ArrayList<>();
 	@Unique
 	final ArrayList<SectionPos> enabledSections = new ArrayList<>();
@@ -111,10 +113,9 @@ public class LevelLightEngineMixin implements ColoredLightEngine {
 		for (int i1 = 0; i1 < 10; i1++) { // this shouldn't really be able to fail more than once in a row
 			try {
 				//noinspection RedundantSuppression
-				//noinspection unchecked
-				Map.Entry<Light, StarLightInterface>[] collection = engines.entrySet().toArray(new Map.Entry[0]);
-				
+				Map.Entry<Light, StarLightInterface>[] collection = enginesArray;
 				int engineCount = collection.length;
+				
 				Color[] colors = new Color[engineCount];
 				boolean hasNonZero = false;
 				
@@ -179,6 +180,9 @@ public class LevelLightEngineMixin implements ColoredLightEngine {
 	@Unique
 	public void preRunUpdates() {
 		if (enable) {
+			if (enginesArray.length != totalEngines)
+				enginesArray = engines.entrySet().toArray(new Map.Entry[0]);
+			
 			for (int i1 = 0; i1 < 10; i1++) { // this shouldn't really be able to fail more than once in a row
 				try {
 					StarLightInterface[] collection = engines.values().toArray(new StarLightInterface[0]);

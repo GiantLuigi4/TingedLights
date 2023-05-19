@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LightChunkGetter;
@@ -26,9 +27,20 @@ public class ColoredLightInterface extends DummyLightInterface implements OutOfL
 	BlockGetter level;
 	LightChunkGetter chunkSource;
 	
+	Pair<ChunkPos, SWMRNibbleArray[]> prev = null;
+	
 	@Override
 	public SWMRNibbleArray[] TingedLights$getBlockNibbles(ExtendedChunk chunk) {
-		return ((ColorExtendedChunk) chunk).getBlockNibbles(type);
+		ChunkPos pos = ((ChunkAccess) chunk).getPos();
+		
+		Pair<ChunkPos, SWMRNibbleArray[]> prev = this.prev;
+		
+		SWMRNibbleArray[] nibble;
+		if (prev == null || !prev.getFirst().equals(pos))
+			this.prev = new Pair<>(pos, nibble = ((ColorExtendedChunk) chunk).getBlockNibbles(type));
+		else nibble = prev.getSecond();
+		
+		return nibble;
 	}
 	
 	@Override

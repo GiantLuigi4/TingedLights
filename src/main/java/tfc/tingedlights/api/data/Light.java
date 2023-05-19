@@ -25,9 +25,16 @@ public final class Light extends AbstractLight {
 		this.distanceFade = distanceFade;
 		
 		colors = new Color[16];
-		for (int i = 0; i < colors.length; i++) {
+		for (int i = 0; i < colors.length; i++)
 			colors[i] = calcColor((byte) i);
-		}
+		
+		hc = calcHashCode();
+	}
+	
+	public int calcHashCode() {
+		int result = Objects.hash(color, endColor, blendThreshold, distanceFade);
+		result = 31 * result + Arrays.hashCode(colors);
+		return result;
 	}
 	
 	protected Color calcColor(byte brightness) {
@@ -86,15 +93,11 @@ public final class Light extends AbstractLight {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		Light light = (Light) o;
-		return blendThreshold == light.blendThreshold && distanceFade == light.distanceFade && Objects.equals(color, light.color) && Objects.equals(endColor, light.endColor) && Arrays.equals(colors, light.colors);
-	}
-	
-	@Override
-	public int hashCode() {
-		int result = Objects.hash(color, endColor, blendThreshold, distanceFade);
-		result = 31 * result + Arrays.hashCode(colors);
-		return result;
+		
+		if (this.hc == o.hashCode()) {
+			Light light = (Light) o;
+			return blendThreshold == light.blendThreshold && distanceFade == light.distanceFade && Objects.equals(color, light.color) && Objects.equals(endColor, light.endColor) && Arrays.equals(colors, light.colors);
+		} else return false;
 	}
 	
 	public Color color() {
@@ -119,7 +122,8 @@ public final class Light extends AbstractLight {
 				"color=" + color + ", " +
 				"endColor=" + endColor + ", " +
 				"blendThreshold=" + blendThreshold + ", " +
-				"distanceFade=" + distanceFade + ']';
+				"distanceFade=" + distanceFade +
+				']';
 	}
 	
 	@Override

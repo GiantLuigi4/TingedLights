@@ -1,8 +1,10 @@
 package tfc.tingedlights.util.starlight;
 
 import ca.spottedleaf.starlight.common.light.SWMRNibbleArray;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -29,9 +31,20 @@ public class ColoredStarlightEngine extends DummyBlockEngine implements OutOfLin
 		((ColorExtendedChunk) chunk).setBlockEmptinessMap(type, to);
 	}
 	
+	Pair<ChunkPos, SWMRNibbleArray[]> prev = null;
+	
 	@Override
 	public SWMRNibbleArray[] getNibblesOnChunk(ChunkAccess chunk) {
-		return ((ColorExtendedChunk) chunk).getBlockNibbles(type);
+		ChunkPos pos = chunk.getPos();
+		
+		Pair<ChunkPos, SWMRNibbleArray[]> prev = this.prev;
+		
+		SWMRNibbleArray[] nibble;
+		if (prev == null || !prev.getFirst().equals(pos))
+			this.prev = new Pair<>(pos, nibble = ((ColorExtendedChunk) chunk).getBlockNibbles(type));
+		else nibble = prev.getSecond();
+		
+		return nibble;
 	}
 	
 	@Override

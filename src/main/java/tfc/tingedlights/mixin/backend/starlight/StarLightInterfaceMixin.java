@@ -30,7 +30,7 @@ public class StarLightInterfaceMixin implements OutOfLineChunkExtensionAccessor 
 			exclude = @MethodTarget("TingedLights$getBlockNibbles"),
 			redirTarget = "Lca/spottedleaf/starlight/common/chunk/ExtendedChunk;getBlockNibbles"
 	)
-	public SWMRNibbleArray[] preGetLightValue(ExtendedChunk instance) {
+	public final SWMRNibbleArray[] preGetLightValue(ExtendedChunk instance) {
 		return TingedLights$getBlockNibbles(instance);
 	}
 	
