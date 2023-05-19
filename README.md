@@ -23,7 +23,7 @@ In my experience, good light colors come from
    - a midtone for a moody block (such as lava)
    - a modified highlight for a vibetant block (such as glowstone, which uses a highlight but with the blue value dropped to 10, to get a very defined gold)
 
-But sometimes, the ideal color has to hust be guessed (such as a redstone torch, which I wanted to be extremely red so it can set a mood better than any color on the torch)
+But sometimes, the ideal color has to just be guessed (such as a redstone torch, which I wanted to be extremely red so it can set a mood better than any color on the torch)
 
 ## So what else does this mod do?
 The mod also changes some stuff about block rendering, implementing vertex sorting, for sake of having smooth lighting look more smooth, and also having amambient occlusion look a bit more consistent
