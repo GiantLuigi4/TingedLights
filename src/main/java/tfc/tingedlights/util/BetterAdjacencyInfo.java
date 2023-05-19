@@ -5,10 +5,24 @@ import net.minecraft.core.Direction;
 
 import java.util.Arrays;
 
-public class BetterAdjacencyInfo {
+public enum BetterAdjacencyInfo {
+	DOWN(ModelBlockRenderer.AdjacencyInfo.DOWN, Direction.DOWN),
+	UP(ModelBlockRenderer.AdjacencyInfo.UP, Direction.UP),
+	NORTH(ModelBlockRenderer.AdjacencyInfo.NORTH, Direction.NORTH),
+	SOUTH(ModelBlockRenderer.AdjacencyInfo.SOUTH, Direction.SOUTH),
+	WEST(ModelBlockRenderer.AdjacencyInfo.WEST, Direction.WEST),
+	EAST(ModelBlockRenderer.AdjacencyInfo.EAST, Direction.EAST),
+	;
+	
 	public Direction[] edges = new Direction[4];
 	
-	public BetterAdjacencyInfo(ModelBlockRenderer.AdjacencyInfo fromFacing, Direction facing) {
+	private static final BetterAdjacencyInfo[] valuesCache = values();
+	
+	public static BetterAdjacencyInfo get(ModelBlockRenderer.AdjacencyInfo info) {
+		return valuesCache[info.ordinal()];
+	}
+	
+	BetterAdjacencyInfo(ModelBlockRenderer.AdjacencyInfo fromFacing, Direction facing) {
 		Arrays.fill(edges, Direction.NORTH);
 		if (facing.equals(Direction.UP)) {
 			edges = new Direction[]{

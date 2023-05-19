@@ -22,7 +22,6 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
 import static tfc.tingedlights.utils.config.Config.TesselationOptions.VertexSortingOptions;
-import static tfc.tingedlights.utils.config.Config.TesselationOptions.aoIntensity;
 
 public class BlockTesselator {
 	public static void putQuadData(BlockColors blockColors, BlockAndTintGetter pLevel, BlockState pState, BlockPos pPos, VertexConsumer pConsumer, PoseStack.Pose pPose, BakedQuad pQuad, float pBrightness0, float pBrightness1, float pBrightness2, float pBrightness3, int pLightmap0, int pLightmap1, int pLightmap2, int pLightmap3, int pPackedOverlay, boolean smooth, AOFace face, boolean repackLight) {
@@ -56,31 +55,6 @@ public class BlockTesselator {
 					pBrightness1 *= face.shades[1];
 					pBrightness2 *= face.shades[2];
 					pBrightness3 *= face.shades[3];
-				} else {
-					pBrightness0 /= directionalLighting;
-					pBrightness1 /= directionalLighting;
-					pBrightness2 /= directionalLighting;
-					pBrightness3 /= directionalLighting;
-					pBrightness0 = 1 - pBrightness0;
-					pBrightness1 = 1 - pBrightness1;
-					pBrightness2 = 1 - pBrightness2;
-					pBrightness3 = 1 - pBrightness3;
-					pBrightness0 *= 1 / 0.525;
-					pBrightness1 *= 1 / 0.525;
-					pBrightness2 *= 1 / 0.525;
-					pBrightness3 *= 1 / 0.525;
-					pBrightness0 *= aoIntensity;
-					pBrightness1 *= aoIntensity;
-					pBrightness2 *= aoIntensity;
-					pBrightness3 *= aoIntensity;
-					pBrightness0 = 1 - pBrightness0;
-					pBrightness1 = 1 - pBrightness1;
-					pBrightness2 = 1 - pBrightness2;
-					pBrightness3 = 1 - pBrightness3;
-					pBrightness0 *= directionalLighting;
-					pBrightness1 *= directionalLighting;
-					pBrightness2 *= directionalLighting;
-					pBrightness3 *= directionalLighting;
 				}
 			} else
 				pBrightness0 = pBrightness1 = pBrightness2 = pBrightness3 = directionalLighting;

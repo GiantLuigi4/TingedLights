@@ -35,4 +35,12 @@ public record Color(float r, float g, float b) implements Comparable<Color> {
 				(float) (b * value)
 		);
 	}
+	
+	public Color add(Color other) {
+		return new Color(
+				r + other.r,
+				g + other.g,
+				b + other.b
+		);
+	}
 }

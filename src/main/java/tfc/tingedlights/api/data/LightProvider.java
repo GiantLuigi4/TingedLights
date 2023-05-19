@@ -73,6 +73,8 @@ public abstract class LightProvider {
 					return true;
 				}
 			}
+			if (pState.useShapeForLightOcclusion()) return true;
+			if (pOld.useShapeForLightOcclusion()) return true;
 			int oldLb = pOld.getLightBlock(pLevel, pPos);
 			int newLb = pState.getLightBlock(pLevel, pPos);
 			return oldLb != newLb;

@@ -7,6 +7,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.data.LightManager;
 import tfc.tingedlights.data.access.TingedLightsBlockAttachments;
@@ -42,7 +43,7 @@ public class AOFace {
 		LightManager manager = (LightManager) pLevel.getLightEngine();
 		
 		ModelBlockRenderer.AdjacencyInfo adjacencyInfo = ModelBlockRenderer.AdjacencyInfo.fromFacing(pDirection);
-		BetterAdjacencyInfo adjacency = new BetterAdjacencyInfo(adjacencyInfo, pDirection);
+		BetterAdjacencyInfo adjacency = BetterAdjacencyInfo.get(adjacencyInfo);
 		
 		Color fallback = getLightColor(manager, pLevel.getBlockState(blockpos), pLevel, blockpos);
 		
@@ -52,8 +53,18 @@ public class AOFace {
 		dimmed = new boolean[COUNT];
 		
 		if (pShapeFlags.get(1)) {
-			// TODO: figure out custom AO for non-full blocks
+			Vec3[] vertices = new Vec3[COUNT];
+			for (int i = 0; i < COUNT; i++) {
+				int index = i * 8;
+				vertices[i] = new Vec3(
+						Float.intBitsToFloat(bakedQuad.getVertices()[index]),
+						Float.intBitsToFloat(bakedQuad.getVertices()[index + 1]),
+						Float.intBitsToFloat(bakedQuad.getVertices()[index + 2])
+				);
+			}
+			
 			Arrays.fill(colors, fallback);
+			calcAOPartial(pDirection, pLevel, pState, pPos, pShapeFlags, blockpos, manager, adjacencyInfo, adjacency, vertices, fallback);
 			return;
 		}
 		
@@ -66,10 +77,8 @@ public class AOFace {
 		}
 		
 		for (int i = 0; i < COUNT; i++) {
-			boolean fullDimmed = false;
-			
-			
 			boolean hasSoft = false;
+			boolean fullDimmed = false;
 			
 			
 			/* edge 1 */
@@ -127,8 +136,10 @@ public class AOFace {
 				}
 			}
 			
+			// calculate final color
 			colors[i] = maxBlend(dimmed[i], fullDimmed, fallback, d0, d1, d2);
 			
+			// AO
 			if (dimmed[i] || hasSoft) {
 				float intensity = (1 - Config.TesselationOptions.aoIntensity);
 				if (Config.TesselationOptions.aoIntensity != 0) {
@@ -154,6 +165,44 @@ public class AOFace {
 		}
 	}
 	
+	public void calcAOPartial(Direction pDirection, BlockAndTintGetter pLevel, BlockState pState, BlockPos pPos, BitSet pShapeFlags, BlockPos blockpos, LightManager manager, ModelBlockRenderer.AdjacencyInfo adjacencyInfo, BetterAdjacencyInfo adjacency, Vec3[] vertices, Color fallback) {
+		// TODO: figure out custom AO for non-full blocks
+		BitSet flags = new BitSet();
+		if (pShapeFlags.get(0)) flags.set(0);
+		
+		calculate(pDirection, pLevel, pState, pPos, flags);
+		
+		Color[] srcC = colors;
+		float[] srcS = shades;
+		
+		colors = new Color[COUNT];
+		shades = new float[COUNT];
+		
+		for (int i = 0; i < vertices.length; i++) {
+			float[] weights = LightWeights.get(vertices[i], pDirection);
+			for (int i1 = 0; i1 < weights.length; i1++) {
+				colors[i] = blend(srcC, weights);
+				shades[i] = blend(srcS, weights);
+			}
+		}
+	}
+	
+	private Color blend(Color[] srcC, float[] weights) {
+		return new Color(
+				srcC[0].r() * weights[0] + srcC[1].r() * weights[1] + srcC[2].r() * weights[2] + srcC[3].r() * weights[3],
+				srcC[0].g() * weights[0] + srcC[1].g() * weights[1] + srcC[2].g() * weights[2] + srcC[3].g() * weights[3],
+				srcC[0].b() * weights[0] + srcC[1].b() * weights[1] + srcC[2].b() * weights[2] + srcC[3].b() * weights[3]
+		);
+	}
+	
+	private float blend(float[] srcS, float[] weights) {
+		return
+				srcS[0] * weights[0] +
+						srcS[1] * weights[1] +
+						srcS[2] * weights[2] +
+						srcS[3] * weights[3];
+	}
+	
 	protected int lightObstruction(BlockState state, BlockAndTintGetter pLevel, BlockPos blockPos) {
 		if (state.getBlock().equals(Blocks.WATER))
 			return 0; // TODO: I'd like to make this a bit less hardcoded if possible
@@ -174,20 +223,6 @@ public class AOFace {
 	protected Color getLightColor(LightManager manager, BlockState blockstate, BlockAndTintGetter pLevel, BlockPos blockpos$mutableblockpos) {
 		// TODO: do this more correctly? cache?
 		return manager.getColor(blockpos$mutableblockpos);
-	}
-	
-	protected Color blend(Color... colors) {
-		float rOut = 1;
-		float gOut = 1;
-		float bOut = 1;
-		
-		for (Color color : colors) {
-			rOut = Math.min(rOut, color.r());
-			gOut = Math.min(gOut, color.g());
-			bOut = Math.min(bOut, color.b());
-		}
-		
-		return new Color(rOut, gOut, bOut);
 	}
 	
 	protected Color maxBlend(boolean dimmed, boolean fullyDimmed, Color min, Color... colors) {
