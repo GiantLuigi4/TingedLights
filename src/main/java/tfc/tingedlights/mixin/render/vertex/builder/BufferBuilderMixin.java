@@ -10,9 +10,9 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import tfc.tingedlights.VertexElements;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.itf.VertexBufferConsumerExtensions;
+import tfc.tingedlights.vertex.VertexElements;
 
 import javax.annotation.Nullable;
 

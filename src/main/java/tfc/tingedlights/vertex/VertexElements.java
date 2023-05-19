@@ -1,4 +1,4 @@
-package tfc.tingedlights;
+package tfc.tingedlights.vertex;
 
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 

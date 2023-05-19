@@ -180,6 +180,9 @@ dependencies {
 //    implementation fg.deobf("curse.maven:radon-596879:3707321")
     implementation fg.deobf("curse.maven:starlight-526854:3706539")
 
+    implementation fg.deobf("curse.maven:flywheel-486392:4341461")
+    implementation fg.deobf("curse.maven:create-328085:4371807")
+
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 

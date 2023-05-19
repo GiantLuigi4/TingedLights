@@ -32,7 +32,7 @@ public class HookParser {
 		for (AnnotationNode allAnnotation : allAnnotations(node)) {
 			if (isAnnotation(Hook.class, allAnnotation)) {
 				HookStruct struct = parseInto(allAnnotation, HookStruct.class);
-				target = struct.target;
+				target = struct.value;
 			} else if (isAnnotation(RemoveMethods.class, allAnnotation)) {
 				RemoveMethodsStruct struct = parseInto(allAnnotation, RemoveMethodsStruct.class);
 				patches.add(new RemoveMethodPatch(node.name, struct.targets));
