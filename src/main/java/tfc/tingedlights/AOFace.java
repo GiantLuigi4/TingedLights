@@ -1,10 +1,12 @@
 package tfc.tingedlights;
 
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -29,6 +31,7 @@ public class AOFace {
 	Color[] colors = null;
 	boolean[] dimmed = null;
 	float[] shades = null;
+	int[] skylight = null;
 	
 	private static final int[][] MAPPINGS = new int[][]{
 			new int[]{0, 3},
@@ -46,11 +49,14 @@ public class AOFace {
 		BetterAdjacencyInfo adjacency = BetterAdjacencyInfo.get(adjacencyInfo);
 		
 		Color fallback = getLightColor(manager, pLevel.getBlockState(blockpos), pLevel, blockpos);
+		int self = pLevel.getBrightness(LightLayer.SKY, blockpos);
 		
 		BlockPos.MutableBlockPos posMut = new BlockPos.MutableBlockPos();
 		
 		colors = new Color[COUNT];
 		dimmed = new boolean[COUNT];
+		
+		skylight = new int[COUNT];
 		
 		if (pShapeFlags.get(1)) {
 			Vec3[] vertices = new Vec3[COUNT];
@@ -71,7 +77,7 @@ public class AOFace {
 		int lightBlock;
 		BlockState state;
 		
-		if (Config.TesselationOptions.removeVanillaAO && Config.TesselationOptions.aoIntensity != 0) {
+		if (Config.TesselationOptions.AOOptions.removeVanillaAO && Config.TesselationOptions.AOOptions.aoIntensity != 0) {
 			shades = new float[COUNT];
 			Arrays.fill(shades, 1);
 		}
@@ -89,6 +95,7 @@ public class AOFace {
 			// then don't bother getting the light color
 			// it will be BLACK anyway
 			Color d0 = Color.BLACK;
+			int s0 = 0;
 			// ao
 			lightBlock = lightObstruction(state, pLevel, posMut);
 			if (lightBlock == 15) dimmed[i] = true;
@@ -96,6 +103,7 @@ public class AOFace {
 				if (lightBlock == 16) hasSoft = true;
 				// smooth light
 				d0 = getLightColor(manager, state, pLevel, posMut);
+				s0 = pLevel.getBrightness(LightLayer.SKY, posMut);
 			}
 			
 			
@@ -104,6 +112,7 @@ public class AOFace {
 			state = pLevel.getBlockState(posMut);
 			
 			Color d1 = Color.BLACK;
+			int s1 = 0;
 			// ao
 			lightBlock = lightObstruction(state, pLevel, posMut);
 			if (lightBlock == 15) {
@@ -113,12 +122,13 @@ public class AOFace {
 				if (lightBlock == 16) hasSoft = true;
 				// smooth light
 				d1 = getLightColor(manager, state, pLevel, posMut);
+				s1 = pLevel.getBrightness(LightLayer.SKY, posMut);
 			}
 			
 			
 			/* corner */
 			Color d2 = Color.BLACK;
-			
+			int s2 = 0;
 			// if both sides are dimmed, then that means it shouldn't check the corner
 			// this prevents light bleeding
 			if (!fullDimmed) {
@@ -133,19 +143,21 @@ public class AOFace {
 					if (lightBlock == 16) hasSoft = true;
 					// smooth light
 					d2 = getLightColor(manager, state, pLevel, posMut);
+					s2 = pLevel.getBrightness(LightLayer.SKY, posMut);
 				}
 			}
 			
 			// calculate final color
-			colors[i] = maxBlend(dimmed[i], fullDimmed, fallback, d0, d1, d2);
+			colors[i] = confBlend(dimmed[i], fullDimmed, fallback, d0, d1, d2);
+			skylight[i] = LightTexture.pack(0, maxBlend(self, s0, s1, s2));
 			
 			// AO
 			if (dimmed[i] || hasSoft) {
-				float intensity = (1 - Config.TesselationOptions.aoIntensity);
-				if (Config.TesselationOptions.aoIntensity != 0) {
+				float intensity = (1 - Config.TesselationOptions.AOOptions.aoIntensity);
+				if (Config.TesselationOptions.AOOptions.aoIntensity != 0) {
 					// make corners darker than edges
 					if (fullDimmed)
-						intensity *= 0.75f;
+						intensity *= Config.TesselationOptions.AOOptions.cornerMul;
 					if (hasSoft)
 						intensity = (intensity + 1) * 0.5f;
 					
@@ -163,6 +175,10 @@ public class AOFace {
 				}
 			}
 		}
+	}
+	
+	protected int maxBlend(int self, int s0, int s1, int s2) {
+		return Math.max(Math.max(Math.max(s0, s1), s2), self);
 	}
 	
 	public void calcAOPartial(Direction pDirection, BlockAndTintGetter pLevel, BlockState pState, BlockPos pPos, BitSet pShapeFlags, BlockPos blockpos, LightManager manager, ModelBlockRenderer.AdjacencyInfo adjacencyInfo, BetterAdjacencyInfo adjacency, Vec3[] vertices, Color fallback) {
@@ -215,7 +231,7 @@ public class AOFace {
 			if (state.getBlock() instanceof TingedLightsBlockAttachments attachments) {
 				int b = attachments.getBrightness(state, pLevel, blockPos);
 				if (b != 0)
-					return Config.TesselationOptions.allowSoftAO ? 16 : 0;
+					return Config.TesselationOptions.AOOptions.allowSoftAO ? 16 : 0;
 			}
 		}
 		
@@ -227,7 +243,7 @@ public class AOFace {
 		return manager.getColor(blockpos$mutableblockpos);
 	}
 	
-	protected Color maxBlend(boolean dimmed, boolean fullyDimmed, Color min, Color... colors) {
+	protected Color confBlend(boolean dimmed, boolean fullyDimmed, Color min, Color... colors) {
 		float rOut = min.r();
 		float gOut = min.g();
 		float bOut = min.b();

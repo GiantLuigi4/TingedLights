@@ -45,33 +45,6 @@ public class Config {
 	})
 	@CFGSegment("TesselationOptions")
 	public static class TesselationOptions {
-		@Name("AOIntensity")
-		@Comment({
-				"How defined ambient occlusion should be",
-				"If vanilla AO is enabled, then 0 is vanilla",
-				"If vanilla AO not enabled, then",
-				"- with SmoothingMode 0, 0.25 gets it close to vanilla",
-				"- with SmoothingMode 1 and 2, 0.4 gets it close to vanilla"
-		})
-		@Default(valueF = 0.4f)
-		@FloatRange(minV = 0, maxV = 1)
-		public static float aoIntensity = 0.4f;
-		
-		@Name("RemoveVanillaAO")
-		@Comment({
-				"Whether or not to remove vanilla AO",
-				"Turning this on will most likely make smooth lighting look nicer"
-		})
-		@Default(valueBoolean = true)
-		public static boolean removeVanillaAO;
-		
-		@Name("SoftAO")
-		@Comment({
-				"Whether or not AO should apply around light sources that are also full blocks"
-		})
-		@Default(valueBoolean = true)
-		public static boolean allowSoftAO;
-		
 		@Name("SmoothingMode")
 		@Comment({
 				"How smooth lighting should be calculated",
@@ -83,6 +56,14 @@ public class Config {
 		@IntRange(minV = 0, maxV = 2)
 		public static int aoMode;
 		
+		@Name("DirectionalLighting")
+		@Comment({
+				"Whether or not to use directional lighting",
+				"Having this off can be used to create some interesting effects"
+		})
+		@Default(valueBoolean = true)
+		public static boolean directionalLighting;
+		
 		@Name("FastDraw")
 		@Comment({
 				"Whether or not to use a faster rendering method",
@@ -90,6 +71,47 @@ public class Config {
 		})
 		@Default(valueBoolean = true)
 		public static boolean fastDraw;
+		
+		@CFGSegment("AmbientOcclusion")
+		public static class AOOptions {
+			@Name("AOIntensity")
+			@Comment({
+					"How defined ambient occlusion should be",
+					"If vanilla AO is enabled, then 0 is vanilla",
+					"If vanilla AO not enabled, then",
+					"- with SmoothingMode 0, 0.25 gets it close to vanilla",
+					"- with SmoothingMode 1 and 2, 0.4 gets it close to vanilla"
+			})
+			@Default(valueF = 0.4f)
+			@FloatRange(minV = 0, maxV = 1)
+			public static float aoIntensity = 0.4f;
+			
+			@Name("CornerMul")
+			@Comment({
+					"How defined ambient occlusion should be on inner corners",
+					"Default is 0.75, but for low AO values, that'll look bad",
+					"The lower this value is, the darker inner corner AO becomes",
+					"1 is off"
+			})
+			@Default(valueF = 0.75f)
+			@FloatRange(minV = 0, maxV = 1)
+			public static float cornerMul = 0.75f;
+			
+			@Name("RemoveVanillaAO")
+			@Comment({
+					"Whether or not to remove vanilla AO",
+					"Turning this on will most likely make smooth lighting look nicer"
+			})
+			@Default(valueBoolean = true)
+			public static boolean removeVanillaAO;
+			
+			@Name("SoftAO")
+			@Comment({
+					"Whether or not AO should apply around light sources that are also full blocks"
+			})
+			@Default(valueBoolean = true)
+			public static boolean allowSoftAO;
+		}
 		
 		@Comment("For vanilla-style AO, turn everything under this category to false")
 		@CFGSegment("VertexSorting")

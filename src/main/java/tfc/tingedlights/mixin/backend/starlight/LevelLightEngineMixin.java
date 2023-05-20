@@ -39,9 +39,9 @@ public class LevelLightEngineMixin implements ColoredLightEngine {
 	@Unique
 	Map.Entry<Light, StarLightInterface>[] enginesArray = new Map.Entry[0];
 	@Unique
-	final ArrayList<ChunkPos> enabledLights = new ArrayList<>();
+	final HashSet<ChunkPos> enabledLights = new HashSet<>();
 	@Unique
-	final ArrayList<SectionPos> enabledSections = new ArrayList<>();
+	final HashSet<SectionPos> enabledSections = new HashSet<>();
 	@Unique
 	int totalEngines = 0;
 	

@@ -26,9 +26,9 @@ import tfc.tingedlights.data.access.IHoldColoredLights;
 import tfc.tingedlights.util.vanilla.ColoredBlockLightingEngine;
 import tfc.tingedlights.utils.LightInfo;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 @Mixin(LevelLightEngine.class)
@@ -41,9 +41,9 @@ public class LevelLightEngineMixin implements ColoredLightEngine {
 	@Unique
 	Map.Entry<Light, BlockLightEngine>[] enginesArray = new Map.Entry[0];
 	@Unique
-	final ArrayList<ChunkPos> enabledLights = new ArrayList<>();
+	final HashSet<ChunkPos> enabledLights = new HashSet<>();
 	@Unique
-	final ArrayList<SectionPos> enabledSections = new ArrayList<>();
+	final HashSet<SectionPos> enabledSections = new HashSet<>();
 	@Unique
 	int totalEngines = 0;
 	

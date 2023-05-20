@@ -45,8 +45,12 @@ public class BlockTesselator {
 		
 		// vanilla's AO algo is scuffed
 		// so I added in an option to just replace it entirely
-		if (Config.TesselationOptions.removeVanillaAO) {
-			float directionalLighting = pLevel.getShade(pQuad.getDirection(), pQuad.isShade());
+		if (Config.TesselationOptions.AOOptions.removeVanillaAO) {
+			float directionalLighting =
+					Config.TesselationOptions.directionalLighting ?
+							pLevel.getShade(pQuad.getDirection(), pQuad.isShade()) :
+							1
+					;
 			
 			pBrightness0 = pBrightness1 = pBrightness2 = pBrightness3 = directionalLighting;
 			
@@ -72,6 +76,8 @@ public class BlockTesselator {
 		VertexBufferConsumerExtensions extensions = ((VertexBufferConsumerExtensions) pConsumer);
 		
 		if (face != null) {
+			if (face.skylight != null) lightmap = face.skylight;
+			
 			Color[] colors = face.colors;
 			boolean hasNonNull = false;
 			for (int i = 0; i < colors.length; i++) {
