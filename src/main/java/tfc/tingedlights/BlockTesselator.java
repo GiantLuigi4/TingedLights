@@ -214,6 +214,16 @@ public class BlockTesselator {
 					firstVertex = k + 1;
 				}
 			}
+			
+			if (maxV == 0) {
+				for (int k = 0; k < count; ++k) {
+					float v = pCombinedLights[k];
+					if (v > maxV) {
+						maxV = v;
+						firstVertex = k + 1;
+					}
+				}
+			}
 		}
 		
 		if (firstVertex >= count) firstVertex -= count;

@@ -21,8 +21,7 @@ public class OffThread {
 							ignored.printStackTrace();
 						}
 					}
-				}
-				if (actions.isEmpty()) {
+				} else {
 					Thread.sleep(1);
 				}
 			} catch (Throwable ignored) {

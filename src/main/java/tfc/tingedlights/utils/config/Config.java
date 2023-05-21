@@ -37,6 +37,15 @@ public class Config {
 		})
 		@Default(valueBoolean = false)
 		public static boolean dumpShaders = false;
+		
+		@Name("AllowThreading")
+		@Comment({
+				"Currently only implemented for starlight",
+				"Runs chunk edge updating on a second thread when chunks load in",
+				"Reduces stutter"
+		})
+		@Default(valueBoolean = false)
+		public static boolean threading = false;
 	}
 	
 	@Comment({
@@ -54,7 +63,7 @@ public class Config {
 		})
 		@Default(valueI = 2)
 		@IntRange(minV = 0, maxV = 2)
-		public static int aoMode;
+		public static int aoMode = 2;
 		
 		@Name("DirectionalLighting")
 		@Comment({
@@ -62,7 +71,7 @@ public class Config {
 				"Having this off can be used to create some interesting effects"
 		})
 		@Default(valueBoolean = true)
-		public static boolean directionalLighting;
+		public static boolean directionalLighting = true;
 		
 		@Name("FastDraw")
 		@Comment({
@@ -70,7 +79,7 @@ public class Config {
 				"This may or may not cause incompatibilities with other mods that change block rendering"
 		})
 		@Default(valueBoolean = true)
-		public static boolean fastDraw;
+		public static boolean fastDraw = true;
 		
 		@CFGSegment("AmbientOcclusion")
 		public static class AOOptions {
@@ -103,14 +112,14 @@ public class Config {
 					"Turning this on will most likely make smooth lighting look nicer"
 			})
 			@Default(valueBoolean = true)
-			public static boolean removeVanillaAO;
+			public static boolean removeVanillaAO = true;
 			
 			@Name("SoftAO")
 			@Comment({
 					"Whether or not AO should apply around light sources that are also full blocks"
 			})
 			@Default(valueBoolean = true)
-			public static boolean allowSoftAO;
+			public static boolean allowSoftAO = true;
 		}
 		
 		@Comment("For vanilla-style AO, turn everything under this category to false")

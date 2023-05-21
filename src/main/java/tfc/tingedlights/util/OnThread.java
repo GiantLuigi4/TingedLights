@@ -32,16 +32,10 @@ public class OnThread {
 		
 		if (!events.isEmpty()) {
 			synchronized (events) {
-				ArrayList<Integer> toRemove = new ArrayList<>();
-				for (int i = events.size() - 1; i >= 0; i--) {
-					Event e = events.get(i);
-					if (e.shouldRun()) {
+				for (Event e : events)
+					if (e.shouldRun())
 						e.run();
-						toRemove.add(i);
-						break;
-					}
-				}
-				toRemove.forEach((i) -> events.remove((int) i));
+				events.clear();
 			}
 		}
 	}

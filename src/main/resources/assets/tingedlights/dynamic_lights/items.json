@@ -115,5 +115,9 @@
     "start": [230, 202, 157],
     "end": [156, 127, 88],
     "transition_start": 14
+  },
+  "minecraft:glow_lichen": {
+    "color": [173, 174, 140],
+    "brightness": 7
   }
 }

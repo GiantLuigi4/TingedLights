@@ -69,7 +69,6 @@ public class AOFace {
 				);
 			}
 			
-			Arrays.fill(colors, fallback);
 			calcAOPartial(pDirection, pLevel, pState, pPos, pShapeFlags, blockpos, manager, adjacencyInfo, adjacency, vertices, fallback);
 			return;
 		}
@@ -190,10 +189,17 @@ public class AOFace {
 		
 		Color[] srcC = colors;
 		float[] srcS = shades;
+		float[] sky = new float[]{
+				skylight[0],
+				skylight[1],
+				skylight[2],
+				skylight[3]
+		};
 		
 		colors = new Color[COUNT];
 		if (srcS != null)
 			shades = new float[COUNT];
+		skylight = new int[COUNT];
 		
 		for (int i = 0; i < vertices.length; i++) {
 			float[] weights = LightWeights.get(vertices[i], pDirection);
@@ -201,6 +207,7 @@ public class AOFace {
 				colors[i] = blend(srcC, weights);
 				if (srcS != null)
 					shades[i] = blend(srcS, weights);
+				skylight[i] = (int) blend(sky, weights);
 			}
 		}
 	}

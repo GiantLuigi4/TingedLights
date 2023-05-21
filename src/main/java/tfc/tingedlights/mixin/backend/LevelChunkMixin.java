@@ -130,7 +130,7 @@ public abstract class LevelChunkMixin implements IHoldColoredLights {
 							manager.updateLight(light.light(), light.pos());
 						}
 					}
-				}, 10
+				}, 0
 		);
 	}
 	

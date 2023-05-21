@@ -16,6 +16,8 @@ import net.minecraft.world.level.chunk.LightChunkGetter;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import tfc.tingedlights.api.data.Light;
 import tfc.tingedlights.data.access.TingedLightsBlockAttachments;
+import tfc.tingedlights.util.Threading;
+import tfc.tingedlights.utils.config.Config;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -88,23 +90,33 @@ public class ColoredLightInterface extends DummyLightInterface implements OutOfL
 	
 	@Override
 	public void propagateChanges() {
-		if (!events.isEmpty()) {
-			synchronized (events) {
-				ArrayList<Pair<CompletableFuture<Void>, Runnable>> runLater = new ArrayList<>();
-				for (int i = 0; i < Minecraft.getInstance().options.renderDistance * Minecraft.getInstance().options.renderDistance; i++) {
-					if (events.isEmpty()) break;
-					
-					Pair<CompletableFuture<Void>, Runnable> event = events.pop();
-					if (event.getFirst().isCancelled()) continue;
-					
-					if (!event.getFirst().isDone()) runLater.add(event);
-					else event.getSecond().run();
+		if (!Config.GeneralOptions.threading) {
+			if (!events.isEmpty()) {
+				synchronized (events) {
+					ArrayList<Pair<CompletableFuture<Void>, Runnable>> runLater = new ArrayList<>();
+					for (int i = 0; i < Minecraft.getInstance().options.renderDistance * Minecraft.getInstance().options.renderDistance; i++) {
+						if (events.isEmpty()) break;
+						
+						Pair<CompletableFuture<Void>, Runnable> event = events.pop();
+						if (event.getFirst().isCancelled()) continue;
+						
+						if (!event.getFirst().isDone()) runLater.add(event);
+						else event.getSecond().run();
+					}
+					events.addAll(runLater);
 				}
-				events.addAll(runLater);
 			}
 		}
 		
 		super.propagateChanges();
+	}
+	
+	protected void onSectionLoaded(SectionPos pPos) {
+		BlockStarLightEngine engine = getBlockLightEngine();
+		ShortArrayList list = new ShortArrayList();
+		list.add((short) pPos.y());
+		engine.checkChunkEdges(chunkSource, pPos.x(), pPos.z(), list);
+		releaseBlockLightEngine(engine);
 	}
 	
 	@Override
@@ -113,13 +125,8 @@ public class ColoredLightInterface extends DummyLightInterface implements OutOfL
 		
 		if (!newEmptyValue) {
 			synchronized (events) {
-				events.add(Pair.of(s, () -> {
-					BlockStarLightEngine engine = getBlockLightEngine();
-					ShortArrayList list = new ShortArrayList();
-					list.add((short) pPos.y());
-					engine.checkChunkEdges(chunkSource, pPos.x(), pPos.z(), list);
-					releaseBlockLightEngine(engine);
-				}));
+				if (Config.GeneralOptions.threading) Threading.chunkLightLoader.addAction(() -> this.onSectionLoaded(pPos));
+				else events.add(Pair.of(s, () -> this.onSectionLoaded(pPos)));
 			}
 		}
 		
