@@ -43,4 +43,16 @@ public record Color(float r, float g, float b) implements Comparable<Color> {
 				b + other.b
 		);
 	}
+	
+	protected static int c(float c) {
+		return (int) (c * 255);
+	}
+	
+	public int getRGB() {
+		return ((0xFF) << 24) |
+				((c(r) & 0xFF)) |
+				((c(g) & 0xFF) << 8) |
+				((c(b) & 0xFF) << 16)
+				;
+	}
 }

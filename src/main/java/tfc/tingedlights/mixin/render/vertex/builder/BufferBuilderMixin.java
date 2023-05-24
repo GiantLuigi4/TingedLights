@@ -1,10 +1,8 @@
 package tfc.tingedlights.mixin.render.vertex.builder;
 
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormatElement;
+import com.mojang.blaze3d.vertex.*;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,11 +11,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import tfc.tingedlights.VertexElements;
 import tfc.tingedlights.data.Color;
 import tfc.tingedlights.itf.VertexBufferConsumerExtensions;
+import tfc.tingedlights.util.BufferBuilderCode;
 
 import javax.annotation.Nullable;
 
 @Mixin(BufferBuilder.class)
-public abstract class BufferBuilderMixin {
+public abstract class BufferBuilderMixin extends DefaultedVertexConsumer {
 	@Shadow
 	public abstract VertexConsumer color(int pRed, int pGreen, int pBlue, int pAlpha);
 	
@@ -40,25 +39,40 @@ public abstract class BufferBuilderMixin {
 	@Shadow
 	private int elementIndex;
 	
+	@Shadow
+	public abstract void putFloat(int pIndex, float pFloatValue);
+	
+	@Shadow
+	private boolean fullFormat;
+	
+	@Shadow
+	public abstract void putShort(int pIndex, short pShortValue);
+	
+	@Shadow
+	public abstract void endVertex();
+	
 	@Unique
 	private boolean mayNeedDefaults = false;
+	
+	boolean allowFast = false;
+	boolean usingFastFormat = fastFormat;
 	
 	@Inject(at = @At("TAIL"), method = "switchFormat")
 	public void preSwitchFormat(VertexFormat pFormat, CallbackInfo ci) {
 		mayNeedDefaults = false;
+		allowFast = fastFormat;
 		for (VertexFormatElement element : pFormat.getElements()) {
 			if (element == VertexElements.ELEMENT_LIGHT_COLOR) {
 				mayNeedDefaults = true;
-				fastFormat = false; // TODO: fix&config
+				if (allowFast)
+					fastFormat = BufferBuilderCode.allowFast; // TODO: fix&config
 			}
 		}
 	}
 	
-	boolean usingFastFormat = fastFormat;
-	
 	@Inject(at = @At("HEAD"), method = "nextElement")
 	public void preNextElement(CallbackInfo ci) {
-		usingFastFormat = false;
+		usingFastFormat = BufferBuilderCode.allowFast;
 	}
 	
 	@Inject(at = @At("HEAD"), method = "endVertex")
@@ -72,16 +86,16 @@ public abstract class BufferBuilderMixin {
 			}
 			usingFastFormat = fastFormat;
 		} else {
-			if (mayNeedDefaults) {
-				if (!(((VertexBufferConsumerExtensions) this).isColorDone())) {
-					Color defaultColor = ((VertexBufferConsumerExtensions) this).getDefaultColor();
-					this.putByte(0, (byte) ((int) (defaultColor.r() * 255.0F)));
-					this.putByte(1, (byte) ((int) (defaultColor.g() * 255.0F)));
-					this.putByte(2, (byte) ((int) (defaultColor.b() * 255.0F)));
-					this.putByte(3, (byte) 255);
-					nextElementByte += 4;
-				}
-			}
+//			if (mayNeedDefaults) {
+//				if (!(((VertexBufferConsumerExtensions) this).isColorDone())) {
+//					Color defaultColor = ((VertexBufferConsumerExtensions) this).getDefaultColor();
+//					this.putByte(0, (byte) ((int) (defaultColor.r() * 255.0F)));
+//					this.putByte(1, (byte) ((int) (defaultColor.g() * 255.0F)));
+//					this.putByte(2, (byte) ((int) (defaultColor.b() * 255.0F)));
+//					this.putByte(3, (byte) 255);
+//					nextElementByte += 4;
+//				}
+//			}
 		}
 	}
 	
@@ -109,5 +123,14 @@ public abstract class BufferBuilderMixin {
 				ci.cancel();
 			}
 		}
+	}
+	
+	/**
+	 * @author GiantLuigi4
+	 */
+	@Overwrite
+	public void vertex(float pX, float pY, float pZ, float pRed, float pGreen, float pBlue, float pAlpha, float pTexU, float pTexV, int pOverlayUV, int pLightmapUV, float pNormalX, float pNormalY, float pNormalZ) {
+		if (!BufferBuilderCode.draw((BufferBuilder) (Object) this, defaultColorSet, fastFormat, fullFormat, mayNeedDefaults, pX, pY, pZ, pRed, pGreen, pBlue, pAlpha, pTexU, pTexV, pOverlayUV, pLightmapUV, pNormalX, pNormalY, pNormalZ))
+			super.vertex(pX, pY, pZ, pRed, pGreen, pBlue, pAlpha, pTexU, pTexV, pOverlayUV, pLightmapUV, pNormalX, pNormalY, pNormalZ);
 	}
 }

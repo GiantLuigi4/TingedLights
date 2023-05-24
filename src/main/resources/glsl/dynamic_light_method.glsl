@@ -9,7 +9,7 @@ vec4 dynamic_lights_sample_light(vec4 pos, sampler2D lightMap, ivec2 uv) {
             }
         }
     }
-        #define SIZE 15
+    #define SIZE 15
     d = clamp(d, 0, SIZE) / SIZE;
     int index = int(floor(d * 15));
 
@@ -25,10 +25,10 @@ vec4 dynamic_lights_sample_light(vec4 pos, sampler2D lightMap, ivec2 uv) {
 }
 vec4 extract_matrix_scale(mat4 matr) {
     return vec4(
-    length(vec3(matr[0][0], matr[0][1], matr[0][2])),
-    length(vec3(matr[1][0], matr[1][1], matr[1][2])),
-    length(vec3(matr[2][0], matr[2][1], matr[2][2])),
-    1
+        length(vec3(matr[0][0], matr[0][1], matr[0][2])),
+        length(vec3(matr[1][0], matr[1][1], matr[1][2])),
+        length(vec3(matr[2][0], matr[2][1], matr[2][2])),
+        1
     );
 }
 vec3 extract_matrix_offset(mat4 matr){ return matr[3].xyz; }

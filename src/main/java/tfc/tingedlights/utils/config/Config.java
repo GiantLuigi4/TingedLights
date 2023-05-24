@@ -30,6 +30,16 @@ public class Config {
 		@Default(valueBoolean = true)
 		public static boolean dynamicLights = true;
 		
+		@Name("UseLightmap")
+		@Comment({
+				"If a lightmap should be used for dynamic lighting",
+				"Changing this requires an resource reload (F3+T)",
+				"Having this on allows for dynamic lights from items",
+				"Beyond that, nothing else should be different"
+		})
+		@Default(valueBoolean = true)
+		public static boolean useLightmap = true;
+		
 		@Name("DumpShaders")
 		@Comment({
 				"Whether or not tinged lights should write patched shaders onto the disk",

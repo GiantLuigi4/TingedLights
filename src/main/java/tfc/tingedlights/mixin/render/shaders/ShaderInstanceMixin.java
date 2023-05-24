@@ -1,12 +1,9 @@
 package tfc.tingedlights.mixin.render.shaders;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.shaders.BlendMode;
 import com.mojang.blaze3d.shaders.Shader;
 import com.mojang.blaze3d.shaders.Uniform;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
-import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -14,8 +11,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import tfc.tingedlights.api.DynamicLightApi;
-import tfc.tingedlights.data.Color;
+import tfc.tingedlights.util.ShaderInstanceCode;
 import tfc.tingedlights.utils.config.Config;
 
 import javax.annotation.Nullable;
@@ -46,41 +42,8 @@ public abstract class ShaderInstanceMixin {
 	
 	@Inject(at = @At("TAIL"), method = "apply")
 	public void preApply(CallbackInfo ci) {
-		if (Config.GeneralOptions.dynamicLights) {
-			GlStateManager._glUseProgram(programId);
-			for (int i = 0; i < 15; i++) {
-				Uniform u = getOrMakeUniform("TingedLights_lightColors[" + i + "]", 6, 3);
-				if (u != null) {
-					Color c = DynamicLightApi.getColor(i);
-					u.set(c.r(), c.g(), c.b());
-					u.upload();
-				} else {
-					break;
-				}
-			}
-			Uniform u = getOrMakeUniform("TingedLights_CameraOffset", 6, 3);
-			if (u != null) {
-				Vec3 cOffset = getCameraOffset(0); // TODO
-				u.set((float) cOffset.x, (float) cOffset.y, (float) cOffset.z);
-				u.upload();
-			}
-		}
-	}
-	
-	@Unique
-	private static Vec3 getCameraOffset(float pct) {
-		if (Minecraft.getInstance().cameraEntity != null) {
-			Vec3 entityPos = Minecraft.getInstance().cameraEntity.getEyePosition(Minecraft.getInstance().getDeltaFrameTime());
-			Vec3 cameraPos = Minecraft.getInstance().getEntityRenderDispatcher().camera.getPosition();
-			
-			return new Vec3(
-					entityPos.x - cameraPos.x,
-					entityPos.y - cameraPos.y,
-					entityPos.z - cameraPos.z
-			);
-		} else {
-			return new Vec3(0, 0, 0);
-		}
+		if (Config.GeneralOptions.dynamicLights)
+			ShaderInstanceCode.setupDynamicLights((ShaderInstance) (Object) this, programId, this::getOrMakeUniform);
 	}
 	
 	@Unique

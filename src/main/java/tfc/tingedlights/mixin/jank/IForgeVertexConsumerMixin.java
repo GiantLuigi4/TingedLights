@@ -14,7 +14,6 @@ import org.lwjgl.system.MemoryStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import tfc.tingedlights.data.access.VertexFormatAccess;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -22,11 +21,14 @@ import java.nio.IntBuffer;
 
 @Mixin(IForgeVertexConsumer.class)
 public interface IForgeVertexConsumerMixin {
-	@Shadow int applyBakedLighting(int packedLight, ByteBuffer data);
+	@Shadow
+	int applyBakedLighting(int packedLight, ByteBuffer data);
 	
-	@Shadow void applyBakedNormals(Vector3f generated, ByteBuffer data, Matrix3f normalTransform);
+	@Shadow
+	void applyBakedNormals(Vector3f generated, ByteBuffer data, Matrix3f normalTransform);
 	
 	// TODO: ideally would be a mixin plugin
+	
 	/**
 	 * @author
 	 */

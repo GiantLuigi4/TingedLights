@@ -49,8 +49,7 @@ public class BlockTesselator {
 			float directionalLighting =
 					Config.TesselationOptions.directionalLighting ?
 							pLevel.getShade(pQuad.getDirection(), pQuad.isShade()) :
-							1
-					;
+							1;
 			
 			pBrightness0 = pBrightness1 = pBrightness2 = pBrightness3 = directionalLighting;
 			
@@ -65,7 +64,8 @@ public class BlockTesselator {
 		}
 		
 		if (!(pConsumer instanceof VertexBufferConsumerExtensions)) {
-			pConsumer.putBulkData(pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, 1, lightmap, pPackedOverlay, true);
+			putBulkData(pConsumer, pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, lightmap, pPackedOverlay, true, new float[]{0, 0, 0});
+//			pConsumer.putBulkData(pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, 1, lightmap, pPackedOverlay, true);
 			return;
 		}
 		
@@ -90,7 +90,8 @@ public class BlockTesselator {
 			if (!hasNonNull) {
 				extensions.setColorDone(false);
 				extensions.setDefault(Color.BLACK);
-				pConsumer.putBulkData(pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, 1, lightmap, pPackedOverlay, true);
+				putBulkData(pConsumer, pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, lightmap, pPackedOverlay, true, new float[]{0, 0, 0});
+//				pConsumer.putBulkData(pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, 1, lightmap, pPackedOverlay, true);
 				return;
 			}
 			
@@ -112,7 +113,8 @@ public class BlockTesselator {
 			if (blockColor == null) {
 				extensions.setColorDone(false);
 				extensions.setDefault(Color.BLACK);
-				pConsumer.putBulkData(pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, 1, lightmap, pPackedOverlay, true);
+				putBulkData(pConsumer, pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, lightmap, pPackedOverlay, true, new float[]{0, 0, 0});
+//				pConsumer.putBulkData(pPose, pQuad, new float[]{pBrightness0, pBrightness1, pBrightness2, pBrightness3}, f, f1, f2, 1, lightmap, pPackedOverlay, true);
 				return;
 			}
 			
@@ -322,7 +324,7 @@ public class BlockTesselator {
 		return false;
 	}
 	
-	protected static void vertex(VertexConsumer pConsumer, float pX, float pY, float pZ, float pRed, float pGreen, float pBlue, float pAlpha, float pTexU, float pTexV, int pOverlayUV, int pLightmapUV, float pNormalX, float pNormalY, float pNormalZ, float[] lightColor) {
+	public static void vertex(VertexConsumer pConsumer, float pX, float pY, float pZ, float pRed, float pGreen, float pBlue, float pAlpha, float pTexU, float pTexV, int pOverlayUV, int pLightmapUV, float pNormalX, float pNormalY, float pNormalZ, float[] lightColor) {
 		if (Config.TesselationOptions.fastDraw) {
 			BufferBuilder builder = (BufferBuilder) pConsumer;
 			// position

@@ -15,11 +15,16 @@ import java.nio.charset.StandardCharsets;
 @Mixin(targets = "net.minecraft.client.renderer.ShaderInstance$1")
 public class ShaderInstancePreprocessorMixin {
 	private static final String dynamicLightMethod;
+	private static final String dynamicLightMapMethod;
 	
 	static {
 		try {
 			InputStream stream = DynamicLightPreprocessor.class.getClassLoader().getResourceAsStream("glsl/dynamic_light_method.glsl");
 			dynamicLightMethod = new String(stream.readAllBytes());
+			stream.close();
+			
+			stream = DynamicLightPreprocessor.class.getClassLoader().getResourceAsStream("glsl/dynamic_lightmap_method.glsl");
+			dynamicLightMapMethod = new String(stream.readAllBytes());
 			stream.close();
 		} catch (Throwable err) {
 			throw new RuntimeException(err);
@@ -70,7 +75,8 @@ public class ShaderInstancePreprocessorMixin {
 			out += "    #endif\n" +
 					"}";
 			if (Config.GeneralOptions.dynamicLights) {
-				out += dynamicLightMethod;
+				if (Config.GeneralOptions.useLightmap) out += dynamicLightMapMethod;
+				else out += dynamicLightMethod;
 			}
 			
 			StringBuilder output = new StringBuilder();
