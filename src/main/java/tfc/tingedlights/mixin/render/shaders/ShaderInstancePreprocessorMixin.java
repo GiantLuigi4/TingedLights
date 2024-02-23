@@ -50,8 +50,8 @@ public class ShaderInstancePreprocessorMixin {
 			out += "\n    #ifdef TINGEDLIGHTS_PATCHED\n" +
 					"    	 int g = (uv.x >> 8) & 0xFF;\n" +
 					"    	 int r = (uv.x) & 0xFF;\n" +
-					"    	 int b = (uv.y >> 8) & 0xFF;\n" +
-					"    	 int skyInt = (uv.y) & 0xFF;\n" +
+					"    	 int skyInt = (uv.y >> 8) & 0xFF;\n" +
+					"    	 int b = (uv.y) & 0xFF;\n" +
 
 					"        vec4 light = vec4(r / 255.0, g / 255.0, b / 255.0, 1);\n" +
 
