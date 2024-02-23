@@ -12,18 +12,6 @@ import tfc.tingedlights.itf.VertexBufferConsumerExtensions;
 
 @Mixin(MultiBufferSource.BufferSource.class)
 public class BufferSourceMixin implements VertexBufferConsumerExtensions {
-	boolean defaultColorDone = false;
-	
-	@Override
-	public void setColorDone(boolean val) {
-		defaultColorDone = val;
-	}
-	
-	@Override
-	public boolean isColorDone() {
-		return defaultColorDone;
-	}
-	
 	Color defaultColor = new Color(0, 0, 0);
 	
 	@Override
@@ -40,7 +28,6 @@ public class BufferSourceMixin implements VertexBufferConsumerExtensions {
 	public void postGetBuffer(RenderType pRenderType, CallbackInfoReturnable<VertexConsumer> cir) {
 		VertexConsumer consumer = cir.getReturnValue();
 		if (consumer instanceof VertexBufferConsumerExtensions extensions) {
-			extensions.setColorDone(defaultColorDone);
 			extensions.setDefault(defaultColor);
 		}
 	}

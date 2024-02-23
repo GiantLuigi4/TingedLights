@@ -8,7 +8,35 @@
   "mixins": [
   ],
   "client": [
-    "MojangWhy", "backend.BlockMixin", "backend.ClientLevelMixin", "backend.ItemMixin", "backend.LevelChunkMixin", "backend.LevelMixin", "backend.SectionChangedPacketMixin", "backend.starlight.BlockStarLightEngineMixin", "backend.starlight.ChunkAccessMixin", "backend.starlight.ColoredLightInterfaceMixin", "backend.starlight.ColoredStarlightEngineMixin", "backend.starlight.LevelLightEngineMixin", "backend.starlight.StarLightEngineMixin", "backend.starlight.StarLightInterfaceMixin", "backend.vanilla.LevelLightEngineMixin", "jank.IForgeVertexConsumerMixin", "render.BlockRendererMixin", "render.FluidRendererMixin", "render.LevelRendererMixin", "render.multibuffers.BufferSourceMixin", "render.others.BlockEntityRendererMixin", "render.others.EntityRendererMixin", "render.others.FirstPersonHandMixin", "render.others.LightingMixin", "render.others.ParticleEngineMixin", "render.shaders.ShaderInstanceMixin", "render.shaders.ShaderInstancePreprocessorMixin", "render.shaders.ShaderProgramMixin", "render.vertex.VertexElementMixin", "render.vertex.VertexFormatMixin", "render.vertex.builder.BufferBuilderMixin", "render.vertex.builder.VertexBufferConsumerMixin"
+    "MojangWhy",
+    "backend.BlockMixin",
+    "backend.ClientLevelMixin",
+    "backend.ItemMixin",
+    "backend.LevelChunkMixin",
+    "backend.LevelMixin",
+    "backend.SectionChangedPacketMixin",
+    "backend.starlight.BlockStarLightEngineMixin",
+    "backend.starlight.ChunkAccessMixin",
+    "backend.starlight.ColoredLightInterfaceMixin",
+    "backend.starlight.ColoredStarlightEngineMixin",
+    "backend.starlight.LevelLightEngineMixin",
+    "backend.starlight.StarLightEngineMixin",
+    "backend.starlight.StarLightInterfaceMixin",
+    "backend.vanilla.LevelLightEngineMixin",
+    "jank.IForgeVertexConsumerMixin",
+    "render.BlockRendererMixin",
+    "render.FluidRendererMixin",
+    "render.LevelRendererMixin",
+    "render.multibuffers.BufferSourceMixin",
+    "render.others.BlockEntityRendererMixin",
+    "render.others.EntityRendererMixin",
+    "render.others.FirstPersonHandMixin",
+    "render.others.LightingMixin",
+    "render.others.ParticleEngineMixin",
+    "render.shaders.ShaderInstanceMixin",
+    "render.shaders.ShaderInstancePreprocessorMixin",
+    "render.shaders.ShaderProgramMixin",
+    "render.vertex.builder.VertexBufferConsumerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

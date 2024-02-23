@@ -22,7 +22,6 @@ public class BlockEntityRendererMixin<E extends BlockEntity> {
 			BlockPos pos = pBlockEntity.getBlockPos();
 			LightManager engine = ((ILightEngine) pBlockEntity.getLevel().getLightEngine()).getManager();
 			Color color = engine.getColor(new BlockPos(pos));
-			extensions.setColorDone(false);
 			extensions.setDefault(color);
 		}
 	}
@@ -30,7 +29,6 @@ public class BlockEntityRendererMixin<E extends BlockEntity> {
 	@Inject(at = @At("RETURN"), method = "render")
 	public void postRender(E pBlockEntity, float pPartialTick, PoseStack pPoseStack, MultiBufferSource pBufferSource, CallbackInfo ci) {
 		if (pBufferSource instanceof VertexBufferConsumerExtensions extensions) {
-			extensions.setColorDone(false);
 			extensions.setDefault(new Color(0, 0, 0));
 		}
 	}

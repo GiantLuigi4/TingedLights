@@ -7,19 +7,19 @@ uniform  int[SLOTS] TingedLights_LightColors;
 int dynamic_lights_coord(vec3 vert, vec3 origin) {
     vec3 pos = vert - origin;
 
-    float d = 2387;
-    for (float x = 0; x <= 1; x++) {
-        for (float y = 0; y <= 1; y++) {
-            for (float z = 0; z <= 1; z++) {
+    float d = 2387.0;
+    for (float x = 0.0; x <= 1.0; x++) {
+        for (float y = 0.0; y <= 1.0; y++) {
+            for (float z = 0.0; z <= 1.0; z++) {
                 float d1 = abs(round(pos.x + x - 0.5)) + abs(round(pos.y + y - 0.5)) + abs(round(pos.z + z - 0.5));
                 d = min(d, d1);
             }
         }
     }
 
-        #define SIZE 15
-    d = clamp(d, 0, SIZE) / SIZE;
-    int index = int(floor(d * 15));
+    #define SIZE 15.0
+    d = clamp(d, 0.0, SIZE) / SIZE;
+    int index = int(floor(d * 15.0));
 
     return index;
 }
@@ -34,8 +34,8 @@ vec4 dynamic_lights_sample_light(vec4 pos, sampler2D lightMap, ivec2 uv) {
     vec4 outV = mc;
     if (index != 15)
         outV += vec4(texture2D(TingedLights_LightTexture,
-           vec2(float(index) / 15f, 0)
-        ).xyz, 0);
+           vec2(float(index) / 15.0, 0.0)
+        ).xyz, 0.0);
 
     for (int i = 0; i < SLOTS; i++) {
         int color = TingedLights_LightColors[i];
@@ -46,12 +46,12 @@ vec4 dynamic_lights_sample_light(vec4 pos, sampler2D lightMap, ivec2 uv) {
             i1 += int(c.w);
             if (i1 < 15)
                 outV += vec4(texture2D(TingedLights_LightTexture,
-                    vec2(float(i1) / 15f, float(color) / 100f)
+                    vec2(float(i1) / 15.0, float(color) / 100.0)
                 ).xyz, 0.0);
         }
     }
 
-    outV = clamp(outV, 0, 1);
+    outV = clamp(outV, 0.0, 1.0);
     return outV;
 }
 vec4 extract_matrix_scale(mat4 matr) {

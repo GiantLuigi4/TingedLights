@@ -1,10 +1,12 @@
 package tfc.tingedlights.data;
 
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 
 public record Color(float r, float g, float b) implements Comparable<Color> {
 	public static final Color BLACK = new Color(0, 0, 0);
 	
+	@SuppressWarnings("unused")
 	public static Color fromRGB(int r, int g, int b) {
 		return new Color(r / 255f, g / 255f, b / 255f);
 	}
@@ -44,8 +46,8 @@ public record Color(float r, float g, float b) implements Comparable<Color> {
 		);
 	}
 	
-	protected static int c(float c) {
-		return (int) (c * 255);
+	private static int c(float c) {
+		return (int) (Mth.clamp(c, 0, 1) * 255);
 	}
 	
 	public int getRGB() {

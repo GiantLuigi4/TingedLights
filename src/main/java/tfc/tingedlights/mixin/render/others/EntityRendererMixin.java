@@ -22,7 +22,6 @@ public class EntityRendererMixin<E extends Entity> {
 			Vec3 pos = pEntity.getLightProbePosition(pPartialTicks);
 			LightManager engine = ((LightManager) pEntity.level);
 			Color color = LightBlender.blend(pos, engine, pEntity.getLevel());
-			extensions.setColorDone(false);
 			extensions.setDefault(color);
 		}
 	}
@@ -30,7 +29,6 @@ public class EntityRendererMixin<E extends Entity> {
 	@Inject(at = @At("RETURN"), method = "render")
 	public void postRender(E pEntity, double pX, double pY, double pZ, float pRotationYaw, float pPartialTicks, PoseStack pMatrixStack, MultiBufferSource pBuffer, int pPackedLight, CallbackInfo ci) {
 		if (pBuffer instanceof VertexBufferConsumerExtensions extensions) {
-			extensions.setColorDone(false);
 			extensions.setDefault(new Color(0, 0, 0));
 		}
 	}

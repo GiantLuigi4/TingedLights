@@ -1,17 +1,17 @@
 uniform vec3[15] TingedLights_lightColors;
 vec4 dynamic_lights_sample_light(vec4 pos, sampler2D lightMap, ivec2 uv) {
-    float d = 2387;
-    for (float x = 0; x <= 1; x++) {
-        for (float y = 0; y <= 1; y++) {
-            for (float z = 0; z <= 1; z++) {
+    float d = 2387.0;
+    for (float x = 0.0; x <= 1.0; x++) {
+        for (float y = 0.0; y <= 1.0; y++) {
+            for (float z = 0.0; z <= 1.0; z++) {
                 float d1 = abs(round(pos.x + x - 0.5)) + abs(round(pos.y + y - 0.5)) + abs(round(pos.z + z - 0.5));
                 d = min(d, d1);
             }
         }
     }
-    #define SIZE 15
-    d = clamp(d, 0, SIZE) / SIZE;
-    int index = int(floor(d * 15));
+    #define SIZE 15.0
+    d = clamp(d, 0.0, SIZE) / SIZE;
+    int index = int(floor(d * 15.0));
 
     vec4 mc = minecraft_sample_lightmap(lightMap, uv);
     if (index == 15) return mc;
@@ -19,8 +19,8 @@ vec4 dynamic_lights_sample_light(vec4 pos, sampler2D lightMap, ivec2 uv) {
     //vec3 v3 = (TingedLights_lightColors[index] * 5) + 1;
     //vec4 outV = mc / vec4(v3, 0);
 
-    vec4 outV = mc + vec4(TingedLights_lightColors[index], 0);
-    outV = clamp(outV, 0, 1);
+    vec4 outV = mc + vec4(TingedLights_lightColors[index], 0.0);
+    outV = clamp(outV, 0.0, 1.0);
     return outV;
 }
 vec4 extract_matrix_scale(mat4 matr) {

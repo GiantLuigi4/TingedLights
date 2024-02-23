@@ -42,7 +42,6 @@ public class FirstPersonHandMixin {
 			Vec3 pos = pEntity.getLightProbePosition(pPartialTicks);
 			LightManager engine = ((LightManager) pEntity.getLevel());
 			Color color = LightBlender.blend(pos, engine, pEntity.getLevel());
-			extensions.setColorDone(false);
 			extensions.setDefault(color);
 		}
 	}
@@ -51,7 +50,6 @@ public class FirstPersonHandMixin {
 	public void postRender(PoseStack pMatrixStack, Camera pActiveRenderInfo, float pPartialTicks, CallbackInfo ci) {
 		MultiBufferSource pBuffer = this.renderBuffers.bufferSource();
 		if (pBuffer instanceof VertexBufferConsumerExtensions extensions) {
-			extensions.setColorDone(false);
 			extensions.setDefault(new Color(0, 0, 0));
 		}
 	}

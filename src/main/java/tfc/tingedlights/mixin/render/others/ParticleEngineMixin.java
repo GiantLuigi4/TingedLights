@@ -38,11 +38,9 @@ public class ParticleEngineMixin {
 				manager, level
 		);
 		if (pBuffer instanceof VertexBufferConsumerExtensions extensions) {
-			extensions.setColorDone(false);
 			extensions.setDefault(c);
 		}
 		if (bufferbuilder instanceof VertexBufferConsumerExtensions extensions) {
-			extensions.setColorDone(false);
 			extensions.setDefault(c);
 		}
 	}
@@ -51,11 +49,9 @@ public class ParticleEngineMixin {
 	@Inject(at = @At(shift = At.Shift.AFTER, value = "INVOKE", target = "Lnet/minecraft/client/particle/Particle;render(Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/client/Camera;F)V"), method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/LightTexture;Lnet/minecraft/client/Camera;FLnet/minecraft/client/renderer/culling/Frustum;)V", locals = LocalCapture.CAPTURE_FAILSOFT)
 	public void postDrawParticle(PoseStack pMatrixStack, MultiBufferSource.BufferSource pBuffer, LightTexture pLightTexture, Camera pActiveRenderInfo, float pPartialTicks, Frustum clippingHelper, CallbackInfo ci, PoseStack posestack, Iterator var8, ParticleRenderType particlerendertype, Iterable iterable, Tesselator tesselator, BufferBuilder bufferbuilder, Iterator var13, Particle particle) {
 		if (pBuffer instanceof VertexBufferConsumerExtensions extensions) {
-			extensions.setColorDone(false);
 			extensions.setDefault(new Color(0, 0, 0));
 		}
 		if (bufferbuilder instanceof VertexBufferConsumerExtensions extensions) {
-			extensions.setColorDone(false);
 			extensions.setDefault(new Color(0, 0, 0));
 		}
 	}

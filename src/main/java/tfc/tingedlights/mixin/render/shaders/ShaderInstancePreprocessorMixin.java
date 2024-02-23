@@ -48,8 +48,14 @@ public class ShaderInstancePreprocessorMixin {
 			
 			String out = str.substring(0, targetMethod + 1);
 			out += "\n    #ifdef TINGEDLIGHTS_PATCHED\n" +
-					"        vec4 light = vec4(LightColor, 1);\n" +
-					"        uv = ivec2(15, uv.y);\n" +
+					"    	 int g = (uv.x >> 8) & 0xFF;\n" +
+					"    	 int r = (uv.x) & 0xFF;\n" +
+					"    	 int b = (uv.y >> 8) & 0xFF;\n" +
+					"    	 int skyInt = (uv.y) & 0xFF;\n" +
+
+					"        vec4 light = vec4(r / 255.0, g / 255.0, b / 255.0, 1);\n" +
+
+					"        uv = ivec2(15, skyInt);\n" +
 					"        vec2 clamped = clamp(uv / 256.0, vec2(0.5 / 16.0), vec2(15.5 / 16.0));\n" +
 					"        vec4 sky = texture(lightMap, clamped);\n" +
 					"        \n" +
@@ -65,6 +71,7 @@ public class ShaderInstancePreprocessorMixin {
 					"        }\n" +
 					"        vec4 vec = max(sky, light);\n" +
 					"        vec = min(vec, vec4(1));\n" +
+					"vec.w = 1.0;" +
 					"        return vec;\n" +
 					"    #else\n" +
 					"    ";

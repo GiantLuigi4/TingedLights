@@ -17,7 +17,13 @@ public class LightPreprocessor extends GlslPreprocessor {
 	Program.Type type;
 	
 	public LightPreprocessor(GlslPreprocessor actualProcessor, String name, Program.Type type) {
-		if (name.equals("particle")) {
+		if (
+				name.equals("particle") ||
+						name.equals("position_color_lightmap") ||
+						name.equals("position_color_tex_lightmap") ||
+						name.equals("position_tex_lightmap_color") ||
+						name.equals("rendertype_text")
+		) {
 			particlePreprocessor = new ParticlePreprocessor(type);
 		}
 		this.actualProcessor = actualProcessor;
